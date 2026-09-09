@@ -46,4 +46,27 @@ describe('ChatStreamService', () => {
     expect(onChunk).toHaveBeenCalledWith('这是纯文本回答的第一句');
     expect(onChunk).toHaveBeenCalledWith('这是第二句');
   });
+
+  it('parseSSEBuffer 能够正确解析 AI SDK 7 的 text-delta 与 reasoning-delta', () => {
+    const onChunk = jest.fn();
+    const onThought = jest.fn();
+
+    const sample = [
+      'data: {"type":"reasoning-delta","id":"0","delta":"正在检索"}\n',
+      'data: {"type":"reasoning-delta","id":"0","delta":"故宫路线..."}\n',
+      'data: {"type":"text-delta","id":"0","delta":"推荐"}\n',
+      'data: {"type":"text-delta","id":"0","delta":"北京三日手账之旅"}\n',
+      'data: [DONE]\n',
+    ].join('');
+
+    ChatStreamService.parseSSEBuffer(sample, {
+      onChunk,
+      onThought,
+    });
+
+    expect(onThought).toHaveBeenCalledWith('正在检索');
+    expect(onThought).toHaveBeenCalledWith('故宫路线...');
+    expect(onChunk).toHaveBeenCalledWith('推荐');
+    expect(onChunk).toHaveBeenCalledWith('北京三日手账之旅');
+  });
 });

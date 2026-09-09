@@ -13,35 +13,78 @@ describe('AttractionsService', () => {
     jest.clearAllMocks();
   });
 
-  it('getCities 成功获取城市列表', async () => {
+  it('getCities 成功从后端返回的 cities 数组提取城市列表', async () => {
     (apiClient.get as jest.Mock).mockResolvedValueOnce({
-      data: [{ name: '北京' }, { name: '杭州' }],
+      data: { cities: ['北京', '杭州', '成都'] },
     });
 
     const cities = await AttractionsService.getCities();
-    expect(cities).toEqual(['北京', '杭州']);
+    expect(cities).toEqual(['全部', '北京', '杭州', '成都']);
   });
 
-  it('getAttractions 过滤并标准化景点字段', async () => {
+  it('getAttractions 适配后端 items 结构，拼接相对图片路径并转换标签和价格', async () => {
     (apiClient.get as jest.Mock).mockResolvedValueOnce({
       data: {
-        list: [
+        items: [
           {
             id: 'att_1',
-            name: '西湖断桥',
-            city: '杭州',
-            rating: 4.9,
-            price: '免费',
+            name: '束河古镇',
+            city: '丽江',
+            coverImage: '/images/attractions/lijiang/shuhe.webp',
+            priceText: '免费开放，部分项目另收费',
+            tags: ['历史', '文化'],
+            tips: ['建议清晨前往', '注意防晒'],
           },
         ],
       },
     });
 
-    const list = await AttractionsService.getAttractions({ city: '杭州' });
+    const list = await AttractionsService.getAttractions({
+      city: '丽江',
+      category: '历史人文',
+    });
+
     expect(list.length).toBe(1);
     expect(list[0].id).toBe('att_1');
-    expect(list[0].name).toBe('西湖断桥');
-    expect(list[0].rating).toBe(4.9);
+    expect(list[0].name).toBe('束河古镇');
+    expect(list[0].city).toBe('丽江');
+    expect(list[0].category).toBe('历史');
+    expect(list[0].price).toBe('免费开放，部分项目另收费');
+    expect(list[0].imageUrl).toMatch(/\/images\/attractions\/lijiang\/shuhe\.webp$/);
+    expect(list[0].tips).toBe('建议清晨前往；注意防晒');
+
+    // 验证 category 被正确映射为 tag 参数
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/api/attractions',
+      expect.objectContaining({
+        city: '丽江',
+        tag: '历史',
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('getAttractionDetail 成功解析后端嵌套的 attraction 对象', async () => {
+    (apiClient.get as jest.Mock).mockResolvedValueOnce({
+      data: {
+        attraction: {
+          id: 'att_1',
+          name: '束河古镇',
+          city: '丽江',
+          coverImage: '/images/attractions/lijiang/shuhe.webp',
+          priceText: '免费开放',
+          tags: ['历史'],
+          description: '宁静的纳西小镇',
+        },
+        isFavorite: true,
+      },
+    });
+
+    const detail = await AttractionsService.getAttractionDetail('att_1');
+    expect(detail).not.toBeNull();
+    expect(detail?.name).toBe('束河古镇');
+    expect(detail?.isFavorite).toBe(true);
+    expect(detail?.description).toBe('宁静的纳西小镇');
   });
 
   it('toggleFavorite 调用收藏接口并返回收藏布尔状态', async () => {

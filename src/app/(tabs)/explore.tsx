@@ -53,15 +53,23 @@ export default function ExploreScreen() {
   }, [user]);
 
   // 获取景点列表
-  const fetchAttractions = async () => {
+  const fetchAttractions = async (overrideKeyword?: string) => {
     setLoading(true);
+    const kw = overrideKeyword !== undefined ? overrideKeyword : searchKeyword;
     try {
       const list = await AttractionsService.getAttractions({
         city: selectedCity,
         category: selectedCategory,
-        keyword: searchKeyword,
+        keyword: kw,
       });
       setAttractions(list);
+      setFavoriteIds((prev) => {
+        const next = new Set(prev);
+        list.forEach((item) => {
+          if (item.isFavorite) next.add(item.id);
+        });
+        return next;
+      });
     } catch {
       setAttractions([]);
     } finally {
@@ -81,6 +89,11 @@ export default function ExploreScreen() {
 
   const handleSearchSubmit = () => {
     fetchAttractions();
+  };
+
+  const handleClearSearch = () => {
+    setSearchKeyword('');
+    fetchAttractions('');
   };
 
   const handleToggleFavorite = async (item: AttractionItem) => {
@@ -204,7 +217,7 @@ export default function ExploreScreen() {
             returnKeyType="search"
           />
           {searchKeyword.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchKeyword('')}>
+            <TouchableOpacity onPress={handleClearSearch}>
               <Ionicons
                 name="close-circle"
                 size={16}

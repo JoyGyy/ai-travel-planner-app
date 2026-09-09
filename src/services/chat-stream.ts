@@ -9,9 +9,16 @@ export interface ChatStreamCallbacks {
   onDone?: () => void;
 }
 
+export interface ChatMessagePart {
+  type: 'text';
+  text: string;
+}
+
 export interface ChatMessagePayload {
+  id?: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  parts?: ChatMessagePart[];
 }
 
 /**
@@ -120,12 +127,25 @@ export const ChatStreamService = {
 
         try {
           const parsed = JSON.parse(dataStr);
-          if (parsed.type === 'thought' && parsed.content) {
-            callbacks.onThought?.(parsed.content);
+          // 适配 Vercel AI SDK 7 的 text-delta 与 reasoning-delta 事件，同时兼容旧格式
+          if (
+            parsed.type === 'reasoning-delta' &&
+            typeof parsed.delta === 'string'
+          ) {
+            callbacks.onThought?.(parsed.delta);
+          } else if (parsed.type === 'thought') {
+            const thought = parsed.delta || parsed.content;
+            if (thought) callbacks.onThought?.(thought);
+          } else if (
+            parsed.type === 'text-delta' &&
+            typeof parsed.delta === 'string'
+          ) {
+            callbacks.onChunk(parsed.delta);
+          } else if (parsed.type === 'chunk') {
+            const chunk = parsed.delta || parsed.content;
+            if (chunk) callbacks.onChunk(chunk);
           } else if (parsed.type === 'plan' && parsed.content) {
             callbacks.onPlan?.(parsed.content);
-          } else if (parsed.type === 'chunk' && parsed.content) {
-            callbacks.onChunk(parsed.content);
           } else if (parsed.content) {
             callbacks.onChunk(parsed.content);
           } else if (typeof parsed === 'string') {

@@ -74,8 +74,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const payloadMessages: ChatMessagePayload[] = nextMessages
       .filter((m) => m.content.trim())
       .map((m) => ({
+        id: m.id,
         role: m.role,
         content: m.content,
+        parts: [{ type: 'text', text: m.content }],
       }));
 
     try {
@@ -126,11 +128,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
               const msgs = [...state.messages];
               const targetIdx = msgs.findIndex((m) => m.id === assistantMsgId);
               if (targetIdx !== -1) {
+                let errorNotice = error.message || '网络连接异常，请重试';
+                if (
+                  errorNotice.includes('未登录') ||
+                  errorNotice.includes('401')
+                ) {
+                  errorNotice =
+                    '请先在“我的”页面登录账号，即可畅享 AI 专属旅行规划服务 ✨';
+                }
                 msgs[targetIdx] = {
                   ...msgs[targetIdx],
                   content:
                     msgs[targetIdx].content ||
-                    `⚠️ 对话中断: ${error.message || '网络连接异常，请重试'}`,
+                    `⚠️ 对话提示: ${errorNotice}`,
                 };
               }
               return { messages: msgs };
