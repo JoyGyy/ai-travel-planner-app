@@ -2,9 +2,31 @@
  * App 全局运行环境与 API 配置
  */
 
-// 优先从环境变量读取，开发环境默认指向本地 Next.js 服务端口
-export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+import Constants from 'expo-constants';
+
+/**
+ * 获取 API 基础地址：
+ * 1. 优先从环境变量 EXPO_PUBLIC_API_URL 读取（例如生产环境或本地配置）
+ * 2. 开发环境下自动提取 Metro Bundler 的主机局域网 IP（解决手机连电脑开发时 localhost 指向手机自身的问题）
+ * 3. 兜底回退为 http://localhost:3000
+ */
+export function getApiBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const host = hostUri.split(':')[0];
+    if (host && host !== 'localhost' && host !== '127.0.0.1') {
+      return `http://${host}:3000`;
+    }
+  }
+
+  return 'http://localhost:3000';
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 export const API_ENDPOINTS = {
   // 认证
