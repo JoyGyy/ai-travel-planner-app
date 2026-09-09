@@ -72,12 +72,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     get().stopGenerating();
     const target = get().sessions.find((s) => s.id === sessionId);
     if (target) {
-      const lastPlanMsg = [...target.messages]
-        .reverse()
-        .find((m) => !!m.plan);
+      const lastPlanMsg = [...target.messages].reverse().find((m) => !!m.plan);
       set({
         currentSessionId: target.id,
-        messages: target.messages.length > 0 ? target.messages : [DEFAULT_WELCOME_MESSAGE],
+        messages:
+          target.messages.length > 0
+            ? target.messages
+            : [DEFAULT_WELCOME_MESSAGE],
         currentPlan: lastPlanMsg?.plan || null,
       });
     }
@@ -92,8 +93,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         {
           id: `welcome_${Date.now()}`,
           role: 'assistant',
-          content:
-            '新会话已开启。今天想去哪座城市漫游呢？告诉我你的心愿吧！🌸',
+          content: '新会话已开启。今天想去哪座城市漫游呢？告诉我你的心愿吧！🌸',
           createdAt: Date.now(),
         },
       ],
@@ -229,7 +229,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
               }
               return { messages: msgs, currentPlan: plan };
             });
-            get().syncCurrentSession().catch(() => {});
+            get()
+              .syncCurrentSession()
+              .catch(() => {});
           },
           onError: (error: Error) => {
             set((state) => {
@@ -247,24 +249,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 msgs[targetIdx] = {
                   ...msgs[targetIdx],
                   content:
-                    msgs[targetIdx].content ||
-                    `⚠️ 对话提示: ${errorNotice}`,
+                    msgs[targetIdx].content || `⚠️ 对话提示: ${errorNotice}`,
                 };
               }
               return { messages: msgs };
             });
-            get().syncCurrentSession().catch(() => {});
+            get()
+              .syncCurrentSession()
+              .catch(() => {});
           },
           onDone: () => {
             set({ isGenerating: false, abortController: null });
-            get().syncCurrentSession().catch(() => {});
+            get()
+              .syncCurrentSession()
+              .catch(() => {});
           },
         },
         controller.signal,
       );
     } catch {
       set({ isGenerating: false, abortController: null });
-      get().syncCurrentSession().catch(() => {});
+      get()
+        .syncCurrentSession()
+        .catch(() => {});
     }
   },
 
@@ -274,7 +281,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       abortController.abort();
     }
     set({ isGenerating: false, abortController: null });
-    get().syncCurrentSession().catch(() => {});
+    get()
+      .syncCurrentSession()
+      .catch(() => {});
   },
 
   clearMessages: () => {
@@ -284,7 +293,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         {
           id: 'welcome_reset',
           role: 'assistant',
-          content: '当前会话已重置。今天想去哪座城市漫游呢？告诉我你的心愿吧！🌸',
+          content:
+            '当前会话已重置。今天想去哪座城市漫游呢？告诉我你的心愿吧！🌸',
           createdAt: Date.now(),
         },
       ],
@@ -292,4 +302,3 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
   },
 }));
-

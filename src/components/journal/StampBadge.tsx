@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Animated, StyleSheet, Text, ViewStyle } from 'react-native';
 import { JournalTheme } from '@/constants/theme';
 
 export interface StampBadgeProps {
@@ -8,6 +8,7 @@ export interface StampBadgeProps {
   color?: 'red' | 'blue' | 'accent' | 'primary';
   rotation?: number;
   size?: 'sm' | 'md' | 'lg';
+  animated?: boolean;
   style?: ViewStyle;
 }
 
@@ -20,8 +21,30 @@ export function StampBadge({
   color = 'red',
   rotation = -8,
   size = 'md',
+  animated = false,
   style,
 }: StampBadgeProps) {
+  const [scaleAnim] = useState(() => new Animated.Value(animated ? 1.5 : 1));
+  const [opacityAnim] = useState(() => new Animated.Value(animated ? 0.3 : 1));
+
+  useEffect(() => {
+    if (animated) {
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 4,
+          tension: 70,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 140,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [animated, scaleAnim, opacityAnim]);
+
   const getStampColor = () => {
     switch (color) {
       case 'blue':
@@ -68,7 +91,7 @@ export function StampBadge({
   const dim = getDimensions();
 
   return (
-    <View
+    <Animated.View
       style={[
         styles.stamp,
         {
@@ -76,7 +99,8 @@ export function StampBadge({
           borderWidth: dim.borderWidth,
           paddingVertical: dim.paddingVertical,
           paddingHorizontal: dim.paddingHorizontal,
-          transform: [{ rotate: `${rotation}deg` }],
+          opacity: opacityAnim,
+          transform: [{ rotate: `${rotation}deg` }, { scale: scaleAnim }],
         },
         style,
       ]}
@@ -86,7 +110,7 @@ export function StampBadge({
       >
         {label}
       </Text>
-    </View>
+    </Animated.View>
   );
 }
 

@@ -50,7 +50,9 @@ describe('AttractionsService', () => {
     expect(list[0].city).toBe('丽江');
     expect(list[0].category).toBe('历史');
     expect(list[0].price).toBe('免费开放，部分项目另收费');
-    expect(list[0].imageUrl).toMatch(/\/images\/attractions\/lijiang\/shuhe\.webp$/);
+    expect(list[0].imageUrl).toMatch(
+      /\/images\/attractions\/lijiang\/shuhe\.webp$/,
+    );
     expect(list[0].tips).toBe('建议清晨前往；注意防晒');
 
     // 验证 category 被正确映射为 tag 参数

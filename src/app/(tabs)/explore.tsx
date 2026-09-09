@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -33,10 +33,20 @@ export default function ExploreScreen() {
   const [selectedCity, setSelectedCity] = useState('全部');
   const [selectedCategory, setSelectedCategory] = useState('全部');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [debouncedKeyword, setDebouncedKeyword] = useState('');
   const [attractions, setAttractions] = useState<AttractionItem[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isFiltering, setIsFiltering] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  // 搜索词 300ms 防抖
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedKeyword(searchKeyword.trim());
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchKeyword]);
 
   // 初始化城市与收藏
   useEffect(() => {
@@ -59,42 +69,14 @@ export default function ExploreScreen() {
     };
   }, [user]);
 
-  // 获取景点列表
-  const fetchAttractions = useCallback(
-    async (overrideKeyword?: string) => {
-      setLoading(true);
-      const kw =
-        overrideKeyword !== undefined ? overrideKeyword : searchKeyword;
-      try {
-        const list = await AttractionsService.getAttractions({
-          city: selectedCity,
-          category: selectedCategory,
-          keyword: kw,
-        });
-        setAttractions(list);
-        setFavoriteIds((prev) => {
-          const next = new Set(prev);
-          list.forEach((item) => {
-            if (item.isFavorite) next.add(item.id);
-          });
-          return next;
-        });
-      } catch {
-        setAttractions([]);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [selectedCity, selectedCategory, searchKeyword],
-  );
-
+  // 获取景点列表（由 selectedCity, selectedCategory, debouncedKeyword 驱动）
   useEffect(() => {
     let active = true;
+
     AttractionsService.getAttractions({
       city: selectedCity,
       category: selectedCategory,
-      keyword: searchKeyword,
+      keyword: debouncedKeyword,
     })
       .then((list) => {
         if (!active) return;
@@ -106,33 +88,46 @@ export default function ExploreScreen() {
           });
           return next;
         });
-        setLoading(false);
-        setRefreshing(false);
       })
       .catch(() => {
         if (!active) return;
         setAttractions([]);
-        setLoading(false);
+      })
+      .finally(() => {
+        if (!active) return;
+        setIsInitialLoading(false);
+        setIsFiltering(false);
         setRefreshing(false);
       });
 
     return () => {
       active = false;
     };
-  }, [selectedCity, selectedCategory, searchKeyword]);
+  }, [selectedCity, selectedCategory, debouncedKeyword]);
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchAttractions();
+    AttractionsService.getAttractions({
+      city: selectedCity,
+      category: selectedCategory,
+      keyword: debouncedKeyword,
+    })
+      .then((list) => {
+        setAttractions(list);
+      })
+      .catch(() => {})
+      .finally(() => {
+        setRefreshing(false);
+      });
   };
 
   const handleSearchSubmit = () => {
-    fetchAttractions();
+    setDebouncedKeyword(searchKeyword.trim());
   };
 
   const handleClearSearch = () => {
     setSearchKeyword('');
-    fetchAttractions('');
+    setDebouncedKeyword('');
   };
 
   const handleToggleFavorite = async (item: AttractionItem) => {
@@ -251,19 +246,31 @@ export default function ExploreScreen() {
             placeholder="搜索景点、老街、古镇..."
             placeholderTextColor={JournalTheme.colors.textSecondary}
             value={searchKeyword}
-            onChangeText={setSearchKeyword}
+            onChangeText={(text) => {
+              setSearchKeyword(text);
+              setIsFiltering(true);
+            }}
             onSubmitEditing={handleSearchSubmit}
             returnKeyType="search"
           />
-          {searchKeyword.length > 0 && (
-            <TouchableOpacity onPress={handleClearSearch}>
+          {isFiltering ? (
+            <ActivityIndicator
+              size="small"
+              color={JournalTheme.colors.primary}
+              style={{ marginRight: 4 }}
+            />
+          ) : searchKeyword.length > 0 ? (
+            <TouchableOpacity
+              onPress={handleClearSearch}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Ionicons
                 name="close-circle"
                 size={16}
                 color={JournalTheme.colors.textSecondary}
               />
             </TouchableOpacity>
-          )}
+          ) : null}
         </View>
       </View>
 
@@ -280,7 +287,10 @@ export default function ExploreScreen() {
             return (
               <TouchableOpacity
                 style={[styles.cityChip, isSelected && styles.cityChipActive]}
-                onPress={() => setSelectedCity(item)}
+                onPress={() => {
+                  setSelectedCity(item);
+                  setIsFiltering(true);
+                }}
               >
                 <Text
                   style={[styles.cityText, isSelected && styles.cityTextActive]}
@@ -309,7 +319,10 @@ export default function ExploreScreen() {
                   styles.categoryChip,
                   isSelected && styles.categoryChipActive,
                 ]}
-                onPress={() => setSelectedCategory(item)}
+                onPress={() => {
+                  setSelectedCategory(item);
+                  setIsFiltering(true);
+                }}
               >
                 <Text
                   style={[
@@ -326,7 +339,7 @@ export default function ExploreScreen() {
       </View>
 
       {/* 景点列表 */}
-      {loading ? (
+      {isInitialLoading && attractions.length === 0 ? (
         <View style={styles.centerLoading}>
           <ActivityIndicator size="large" color={JournalTheme.colors.primary} />
           <Text style={styles.loadingText}>正在翻开手账景点库...</Text>

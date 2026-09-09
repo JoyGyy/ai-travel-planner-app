@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Modal,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Platform,
   StyleSheet,
   Text,
@@ -11,13 +14,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { JournalTheme, Spacing } from '@/constants/theme';
 import { ItinerarySummaryCard } from '@/components/journal/ItinerarySummaryCard';
+import { MarkdownText } from '@/components/journal/MarkdownText';
 import { ChatMessage, useChatStore } from '@/stores/use-chat-store';
+import { useItineraryStore } from '@/stores/use-itinerary-store';
 
 const SUGGESTED_QUESTIONS = [
   '预算人均 2000 元，去哪玩比较好？',
@@ -27,6 +32,7 @@ const SUGGESTED_QUESTIONS = [
 ];
 
 export default function ChatScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams<{ prompt?: string }>();
   const {
     messages,
@@ -42,33 +48,68 @@ export default function ChatScreen() {
     deleteSession,
   } = useChatStore();
 
+  const { savePlan, savedPlans, loadSavedPlans } = useItineraryStore();
+
   const [input, setInput] = useState('');
   const [showSessionModal, setShowSessionModal] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(true);
   const [expandedThoughts, setExpandedThoughts] = useState<
     Record<string, boolean>
   >({});
   const flatListRef = useRef<FlatList>(null);
+  const handledPromptRef = useRef<string | null>(null);
+  const isAtBottomRef = useRef(true);
 
   useEffect(() => {
     loadSessions();
-  }, [loadSessions]);
+    loadSavedPlans();
+  }, [loadSessions, loadSavedPlans]);
 
-  // 处理从首页或外部带入的 prompt
+  // 处理从首页或外部带入的 prompt，保障单次消费避免重入
   useEffect(() => {
-    if (params?.prompt && typeof params.prompt === 'string') {
+    if (
+      params?.prompt &&
+      typeof params.prompt === 'string' &&
+      handledPromptRef.current !== params.prompt
+    ) {
+      handledPromptRef.current = params.prompt;
       sendMessage(params.prompt);
+      router.setParams({ prompt: undefined });
     }
-  }, [params?.prompt, sendMessage]);
+  }, [params?.prompt, sendMessage, router]);
 
   const lastMessageContent = messages[messages.length - 1]?.content;
 
-  // 新消息产生时平滑滚动到底部
+  // 智能跟随滚底：仅当用户处于底部时自动跟随新消息，若用户上滑回看则不强行打扰
   useEffect(() => {
-    const timer = setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-    return () => clearTimeout(timer);
+    if (isAtBottomRef.current) {
+      const timer = setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 60);
+      return () => clearTimeout(timer);
+    }
   }, [messages, lastMessageContent]);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 80;
+    const atBottom =
+      layoutMeasurement.height + contentOffset.y >=
+      contentSize.height - paddingToBottom;
+
+    isAtBottomRef.current = atBottom;
+    if (atBottom !== isAtBottom) {
+      setIsAtBottom(atBottom);
+    }
+  };
+
+  const scrollToBottom = (animated = true) => {
+    flatListRef.current?.scrollToEnd({ animated });
+    isAtBottomRef.current = true;
+    setIsAtBottom(true);
+  };
+
+  const showScrollBottomBtn = !isAtBottom && isGenerating;
 
   const handleSend = () => {
     if (!input.trim() || isGenerating) return;
@@ -136,7 +177,7 @@ export default function ChatScreen() {
           {/* AI 消息正文气泡 */}
           <View style={styles.aiBubble}>
             {item.content ? (
-              <Text style={styles.aiText}>{item.content}</Text>
+              <MarkdownText content={item.content} style={styles.aiText} />
             ) : isGenerating ? (
               <View style={styles.typingRow}>
                 <ActivityIndicator
@@ -148,7 +189,28 @@ export default function ChatScreen() {
             ) : null}
 
             {/* 挂载结构化行程手账卡 */}
-            {item.plan && <ItinerarySummaryCard plan={item.plan} />}
+            {item.plan && (
+              <ItinerarySummaryCard
+                plan={item.plan}
+                isSaved={savedPlans.some(
+                  (p) =>
+                    p.id === item.plan?.id ||
+                    (Boolean(p.title) &&
+                      p.title === item.plan?.title &&
+                      p.destination === item.plan?.destination),
+                )}
+                onSave={async (planToSave) => {
+                  await savePlan(planToSave);
+                  Haptics.notificationAsync(
+                    Haptics.NotificationFeedbackType.Success,
+                  ).catch(() => {});
+                  Alert.alert(
+                    '手账已封存',
+                    `已成功将「${planToSave.title || '行程'}」存入本地手账，可在「我的」页面随时离线查看！`,
+                  );
+                }}
+              />
+            )}
           </View>
         </View>
       </View>
@@ -354,7 +416,24 @@ export default function ChatScreen() {
           renderItem={renderMessage}
           contentContainerStyle={styles.messagesList}
           showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         />
+
+        {/* 悬浮回到底部按钮 */}
+        {showScrollBottomBtn && (
+          <TouchableOpacity
+            style={styles.scrollToBottomBtn}
+            onPress={() => {
+              Haptics.selectionAsync().catch(() => {});
+              scrollToBottom(true);
+            }}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="arrow-down" size={14} color="#FFFFFF" />
+            <Text style={styles.scrollToBottomText}>回到底部</Text>
+          </TouchableOpacity>
+        )}
 
         {/* 快捷问题胶囊推荐 */}
         {!isGenerating && messages.length <= 3 && (
@@ -746,5 +825,24 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  scrollToBottomBtn: {
+    position: 'absolute',
+    right: Spacing.four,
+    bottom: 74,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: JournalTheme.colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: JournalTheme.radii.full,
+    ...JournalTheme.shadows.hover,
+    zIndex: 20,
+  },
+  scrollToBottomText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
   },
 });

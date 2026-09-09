@@ -243,7 +243,10 @@ export default function HomeScreen() {
 
             <View style={styles.dividerDashed} />
 
-            <Text style={styles.weatherTips} numberOfLines={showForecast ? undefined : 2}>
+            <Text
+              style={styles.weatherTips}
+              numberOfLines={showForecast ? undefined : 2}
+            >
               🌿 {weather?.tips || '今日天气适宜出行，记录属于你的美好旅途！'}
             </Text>
 
@@ -266,36 +269,37 @@ export default function HomeScreen() {
                   )}
                 </View>
 
-                {Array.isArray(weather?.forecast) && weather.forecast.length > 0 && (
-                  <View style={styles.forecastList}>
-                    <Text style={styles.forecastTitle}>未来几日天气展望</Text>
-                    {weather.forecast.slice(0, 4).map((item, idx) => (
-                      <View key={idx} style={styles.forecastItem}>
-                        <Text style={styles.forecastDate}>{item.date}</Text>
-                        <View style={styles.forecastCond}>
-                          <Ionicons
-                            name={
-                              item.weatherDesc.includes('雨')
-                                ? 'rainy-outline'
-                                : item.weatherDesc.includes('多云')
-                                  ? 'partly-sunny-outline'
-                                  : 'sunny-outline'
-                            }
-                            size={14}
-                            color={JournalTheme.colors.secondary}
-                            style={{ marginRight: 4 }}
-                          />
-                          <Text style={styles.forecastDesc}>
-                            {item.weatherDesc}
+                {Array.isArray(weather?.forecast) &&
+                  weather.forecast.length > 0 && (
+                    <View style={styles.forecastList}>
+                      <Text style={styles.forecastTitle}>未来几日天气展望</Text>
+                      {weather.forecast.slice(0, 4).map((item, idx) => (
+                        <View key={idx} style={styles.forecastItem}>
+                          <Text style={styles.forecastDate}>{item.date}</Text>
+                          <View style={styles.forecastCond}>
+                            <Ionicons
+                              name={
+                                item.weatherDesc.includes('雨')
+                                  ? 'rainy-outline'
+                                  : item.weatherDesc.includes('多云')
+                                    ? 'partly-sunny-outline'
+                                    : 'sunny-outline'
+                              }
+                              size={14}
+                              color={JournalTheme.colors.secondary}
+                              style={{ marginRight: 4 }}
+                            />
+                            <Text style={styles.forecastDesc}>
+                              {item.weatherDesc}
+                            </Text>
+                          </View>
+                          <Text style={styles.forecastTempRange}>
+                            {item.minTemp}°C ~ {item.maxTemp}°C
                           </Text>
                         </View>
-                        <Text style={styles.forecastTempRange}>
-                          {item.minTemp}°C ~ {item.maxTemp}°C
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
+                      ))}
+                    </View>
+                  )}
               </View>
             )}
           </JournalCard>

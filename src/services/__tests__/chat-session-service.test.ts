@@ -1,10 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../api-client';
 import { AuthStorage } from '../auth-storage';
-import {
-  ChatSession,
-  ChatSessionService,
-} from '../chat-session-service';
+import { ChatSession, ChatSessionService } from '../chat-session-service';
 
 jest.mock('../api-client', () => ({
   apiClient: {
@@ -108,4 +105,3 @@ describe('ChatSessionService', () => {
     );
   });
 });
-

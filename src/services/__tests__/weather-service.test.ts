@@ -40,8 +40,20 @@ describe('WeatherService', () => {
       temperature: 20,
       weatherDesc: '晴',
       forecast: [
-        { date: '2026-09-10', maxTemp: 26, minTemp: 18, weatherCode: 0, weatherDesc: '晴' },
-        { date: '2026-09-11', maxTemp: 24, minTemp: 17, weatherCode: 1, weatherDesc: '多云' },
+        {
+          date: '2026-09-10',
+          maxTemp: 26,
+          minTemp: 18,
+          weatherCode: 0,
+          weatherDesc: '晴',
+        },
+        {
+          date: '2026-09-11',
+          maxTemp: 24,
+          minTemp: 17,
+          weatherCode: 1,
+          weatherDesc: '多云',
+        },
       ],
     });
 

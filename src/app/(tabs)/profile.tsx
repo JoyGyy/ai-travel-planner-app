@@ -237,9 +237,9 @@ export default function ProfileScreen() {
     setIsChangingPassword(true);
     try {
       await changePassword(oldPassword.trim(), newPassword.trim());
-      Haptics.notificationAsync(
-        Haptics.NotificationFeedbackType.Success,
-      ).catch(() => {});
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+        () => {},
+      );
       Alert.alert('修改成功', '登录密码已成功更新！');
       setShowPasswordModal(false);
       setOldPassword('');
@@ -311,7 +311,11 @@ export default function ProfileScreen() {
       </View>
 
       <FlatList
-        data={activeTab === 'itineraries' ? savedPlans : (favoriteAttractions as any)}
+        data={
+          activeTab === 'itineraries'
+            ? savedPlans
+            : (favoriteAttractions as any)
+        }
         keyExtractor={(item) => item.id}
         renderItem={
           activeTab === 'itineraries'

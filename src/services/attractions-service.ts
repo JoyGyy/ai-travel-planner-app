@@ -44,9 +44,13 @@ export const AttractionsService = {
   /** 获取可选城市列表 */
   async getCities(): Promise<string[]> {
     try {
-      const res = await apiClient.get<any>(API_ENDPOINTS.ATTRACTIONS, undefined, {
-        skipAuth: true,
-      });
+      const res = await apiClient.get<any>(
+        API_ENDPOINTS.ATTRACTIONS,
+        undefined,
+        {
+          skipAuth: true,
+        },
+      );
       if (Array.isArray(res?.data?.cities) && res.data.cities.length > 0) {
         return ['全部', ...res.data.cities];
       }
@@ -99,8 +103,7 @@ export const AttractionsService = {
         cleanParams.city = params.city;
       }
       if (params?.category && params.category !== '全部') {
-        cleanParams.tag =
-          CATEGORY_TAG_MAP[params.category] || params.category;
+        cleanParams.tag = CATEGORY_TAG_MAP[params.category] || params.category;
       }
       if (params?.keyword?.trim()) {
         cleanParams.keyword = params.keyword.trim();
@@ -128,10 +131,7 @@ export const AttractionsService = {
       if (Array.isArray(list)) {
         return list.map((item: any) => {
           const rawImg =
-            item.coverImage ||
-            item.imageUrl ||
-            item.image ||
-            item.cover;
+            item.coverImage || item.imageUrl || item.image || item.cover;
           const imageUrl = resolveImageUrl(rawImg);
 
           const price =
@@ -188,10 +188,7 @@ export const AttractionsService = {
       if (!data) return null;
 
       const rawImg =
-        data.coverImage ||
-        data.imageUrl ||
-        data.image ||
-        data.cover;
+        data.coverImage || data.imageUrl || data.image || data.cover;
       const imageUrl = resolveImageUrl(rawImg);
 
       const price =
@@ -272,10 +269,7 @@ export const AttractionsService = {
       if (Array.isArray(items)) {
         return items.map((item: any) => {
           const rawImg =
-            item.coverImage ||
-            item.imageUrl ||
-            item.image ||
-            item.cover;
+            item.coverImage || item.imageUrl || item.image || item.cover;
           const imageUrl = resolveImageUrl(rawImg);
 
           const price =

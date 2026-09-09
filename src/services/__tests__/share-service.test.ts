@@ -9,10 +9,12 @@ jest.mock('../api-client', () => ({
   },
 }));
 
-jest.spyOn(Share, 'share').mockImplementation(jest.fn().mockResolvedValue({
-  action: 'sharedAction',
-  activityType: null,
-}));
+jest.spyOn(Share, 'share').mockImplementation(
+  jest.fn().mockResolvedValue({
+    action: 'sharedAction',
+    activityType: null,
+  }),
+);
 
 const mockPlan: ItineraryPlan = {
   id: 'plan_1',
@@ -78,4 +80,3 @@ describe('ShareService', () => {
     );
   });
 });
-

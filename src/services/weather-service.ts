@@ -84,9 +84,10 @@ export const WeatherService = {
         city: data?.city || city,
         temp,
         condition,
-        feelsLike:
-          typeof data?.feelsLike === 'number' ? data.feelsLike : temp,
-        wind: data?.wind || (data?.windSpeed ? `${data.windSpeed} km/h` : undefined),
+        feelsLike: typeof data?.feelsLike === 'number' ? data.feelsLike : temp,
+        wind:
+          data?.wind ||
+          (data?.windSpeed ? `${data.windSpeed} km/h` : undefined),
         windSpeed: data?.windSpeed,
         humidity: data?.humidity ? `${data.humidity}%` : undefined,
         tips:

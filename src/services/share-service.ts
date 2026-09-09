@@ -28,10 +28,7 @@ export const ShareService = {
       },
     };
 
-    const res = await apiClient.post<any>(
-      API_ENDPOINTS.TRAVEL_SHARE,
-      payload,
-    );
+    const res = await apiClient.post<any>(API_ENDPOINTS.TRAVEL_SHARE, payload);
 
     const shareId = res?.shareId || `share_${Date.now()}`;
     const shareUrl = res?.shareUrl || `/share/${shareId}`;
@@ -87,4 +84,3 @@ export const ShareService = {
     }
   },
 };
-
