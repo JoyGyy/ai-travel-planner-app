@@ -89,7 +89,7 @@ export default function ExploreScreen() {
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     const isCurrentlyFav = favoriteIds.has(item.id);
 
     // 乐观更新
@@ -143,7 +143,12 @@ export default function ExploreScreen() {
               <Text style={styles.attractionName} numberOfLines={1}>
                 {item.name}
               </Text>
-              <StampBadge label={`${item.city}`} color="blue" size="sm" rotation={3} />
+              <StampBadge
+                label={`${item.city}`}
+                color="blue"
+                size="sm"
+                rotation={3}
+              />
             </View>
 
             <View style={styles.tagRow}>
@@ -155,11 +160,15 @@ export default function ExploreScreen() {
 
               <View style={styles.ratingBadge}>
                 <Ionicons name="star" size={12} color="#F59E0B" />
-                <Text style={styles.ratingText}>{item.rating?.toFixed(1) || '4.8'}</Text>
+                <Text style={styles.ratingText}>
+                  {item.rating?.toFixed(1) || '4.8'}
+                </Text>
               </View>
 
               <Text style={styles.priceText}>
-                {typeof item.price === 'number' ? `¥${item.price}` : item.price || '免费'}
+                {typeof item.price === 'number'
+                  ? `¥${item.price}`
+                  : item.price || '免费'}
               </Text>
             </View>
 
@@ -218,17 +227,11 @@ export default function ExploreScreen() {
             const isSelected = selectedCity === item;
             return (
               <TouchableOpacity
-                style={[
-                  styles.cityChip,
-                  isSelected && styles.cityChipActive,
-                ]}
+                style={[styles.cityChip, isSelected && styles.cityChipActive]}
                 onPress={() => setSelectedCity(item)}
               >
                 <Text
-                  style={[
-                    styles.cityText,
-                    isSelected && styles.cityTextActive,
-                  ]}
+                  style={[styles.cityText, isSelected && styles.cityTextActive]}
                 >
                   {item}
                 </Text>
@@ -501,4 +504,3 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 });
-

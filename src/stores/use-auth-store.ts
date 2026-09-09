@@ -42,9 +42,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ token, user, isInitialized: true });
         // 静默校验/刷新最新用户信息
         try {
-          const res = await apiClient.get<{ success: boolean; user: StoredUser }>(
-            API_ENDPOINTS.ME
-          );
+          const res = await apiClient.get<{
+            success: boolean;
+            user: StoredUser;
+          }>(API_ENDPOINTS.ME);
           if (res?.user) {
             set({ user: res.user });
             await AuthStorage.saveUser(res.user);
@@ -122,4 +123,3 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 }));
-

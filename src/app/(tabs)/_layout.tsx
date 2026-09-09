@@ -34,7 +34,9 @@ export default function TabLayout() {
           title: 'AI规划',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline'}
+              name={
+                focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline'
+              }
               size={24}
               color={color}
             />
@@ -85,4 +87,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-

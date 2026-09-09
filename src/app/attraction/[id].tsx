@@ -59,7 +59,7 @@ export default function AttractionDetailScreen() {
 
     if (!item) return;
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     const nextState = !isFavorite;
     setIsFavorite(nextState);
 
@@ -110,7 +110,11 @@ export default function AttractionDetailScreen() {
           <Ionicons
             name={isFavorite ? 'heart' : 'heart-outline'}
             size={24}
-            color={isFavorite ? JournalTheme.colors.stampRed : JournalTheme.colors.textSecondary}
+            color={
+              isFavorite
+                ? JournalTheme.colors.stampRed
+                : JournalTheme.colors.textSecondary
+            }
           />
         </TouchableOpacity>
       </View>
@@ -123,7 +127,12 @@ export default function AttractionDetailScreen() {
         <View style={styles.imageContainer}>
           <Image source={{ uri: item.imageUrl }} style={styles.image} />
           <View style={styles.stampOverlay}>
-            <StampBadge label={item.city} color="blue" size="md" rotation={-4} />
+            <StampBadge
+              label={item.city}
+              color="blue"
+              size="md"
+              rotation={-4}
+            />
           </View>
         </View>
 
@@ -133,7 +142,9 @@ export default function AttractionDetailScreen() {
             <Text style={styles.name}>{item.name}</Text>
             <View style={styles.ratingWrap}>
               <Ionicons name="star" size={16} color="#F59E0B" />
-              <Text style={styles.ratingText}>{item.rating?.toFixed(1) || '4.8'}</Text>
+              <Text style={styles.ratingText}>
+                {item.rating?.toFixed(1) || '4.8'}
+              </Text>
             </View>
           </View>
 
@@ -148,7 +159,9 @@ export default function AttractionDetailScreen() {
               />
               <Text style={styles.metaLabel}>门票参考：</Text>
               <Text style={styles.metaValue}>
-                {typeof item.price === 'number' ? `¥${item.price}` : item.price || '免费开放'}
+                {typeof item.price === 'number'
+                  ? `¥${item.price}`
+                  : item.price || '免费开放'}
               </Text>
             </View>
 
@@ -159,7 +172,9 @@ export default function AttractionDetailScreen() {
                 color={JournalTheme.colors.secondary}
               />
               <Text style={styles.metaLabel}>开放时间：</Text>
-              <Text style={styles.metaValue}>{item.openingHours || '全天开放'}</Text>
+              <Text style={styles.metaValue}>
+                {item.openingHours || '全天开放'}
+              </Text>
             </View>
 
             <View style={styles.metaRow}>
@@ -169,7 +184,9 @@ export default function AttractionDetailScreen() {
                 color={JournalTheme.colors.accent}
               />
               <Text style={styles.metaLabel}>建议游玩：</Text>
-              <Text style={styles.metaValue}>{item.recommendedDuration || '2-3 小时'}</Text>
+              <Text style={styles.metaValue}>
+                {item.recommendedDuration || '2-3 小时'}
+              </Text>
             </View>
 
             <View style={styles.metaRow}>
@@ -335,4 +352,3 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
-

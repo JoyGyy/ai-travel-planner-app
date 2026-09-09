@@ -18,7 +18,7 @@ describe('useChatStore', () => {
       async (_payload, callbacks) => {
         callbacks.onChunk('你好！这是生成的行程。');
         callbacks.onDone();
-      }
+      },
     );
 
     await useChatStore.getState().sendMessage('杭州3天游');
@@ -46,4 +46,3 @@ describe('useChatStore', () => {
     expect(useChatStore.getState().abortController).toBeNull();
   });
 });
-

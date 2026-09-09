@@ -71,7 +71,7 @@ describe('useItineraryStore', () => {
   it('loadSavedPlans 能够从本地缓存恢复行程数据', async () => {
     await AsyncStorage.setItem(
       '@saved_itineraries',
-      JSON.stringify([mockPlan])
+      JSON.stringify([mockPlan]),
     );
 
     await useItineraryStore.getState().loadSavedPlans();
@@ -79,4 +79,3 @@ describe('useItineraryStore', () => {
     expect(useItineraryStore.getState().savedPlans[0].id).toBe('plan_001');
   });
 });
-

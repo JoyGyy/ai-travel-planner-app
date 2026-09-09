@@ -11,7 +11,7 @@ describe('Journal UI Components', () => {
     await render(
       <JournalCard>
         <Text>手账内容卡片</Text>
-      </JournalCard>
+      </JournalCard>,
     );
     expect(screen.getByText('手账内容卡片')).toBeTruthy();
   });
@@ -24,13 +24,15 @@ describe('Journal UI Components', () => {
   it('JournalButton 点击时触发点击事件并调用 Haptics 振动', async () => {
     const onPressMock = jest.fn();
     await render(
-      <JournalButton title="确认保存" onPress={onPressMock} haptic={true} />
+      <JournalButton title="确认保存" onPress={onPressMock} haptic={true} />,
     );
 
     const button = screen.getByText('确认保存');
     fireEvent.press(button);
 
     expect(onPressMock).toHaveBeenCalledTimes(1);
-    expect(Haptics.impactAsync).toHaveBeenCalledWith(Haptics.ImpactFeedbackStyle.Light);
+    expect(Haptics.impactAsync).toHaveBeenCalledWith(
+      Haptics.ImpactFeedbackStyle.Light,
+    );
   });
 });

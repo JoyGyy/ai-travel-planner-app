@@ -52,7 +52,8 @@ describe('AttractionsService', () => {
 
     const status = await AttractionsService.toggleFavorite('att_1');
     expect(status).toBe(true);
-    expect(apiClient.post).toHaveBeenCalledWith('/api/attractions/att_1/favorite');
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/api/attractions/att_1/favorite',
+    );
   });
 });
-

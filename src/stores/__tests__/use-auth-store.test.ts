@@ -33,7 +33,10 @@ describe('useAuthStore', () => {
     await useAuthStore.getState().initAuth();
 
     expect(useAuthStore.getState().token).toBe('stored-token');
-    expect(useAuthStore.getState().user).toEqual({ id: 'u1', username: 'tester' });
+    expect(useAuthStore.getState().user).toEqual({
+      id: 'u1',
+      username: 'tester',
+    });
     expect(useAuthStore.getState().isInitialized).toBe(true);
   });
 
@@ -67,4 +70,3 @@ describe('useAuthStore', () => {
     expect(await AuthStorage.getToken()).toBeNull();
   });
 });
-

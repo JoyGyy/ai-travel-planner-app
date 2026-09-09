@@ -49,12 +49,17 @@ export default function ItineraryDetailScreen() {
           id: parsed.id || `plan_${Date.now()}`,
           title: parsed.title || `${parsed.destination || '目的地'}手账行程`,
           destination: parsed.destination || '杭州',
-          totalDays: parsed.totalDays || (parsed.days?.length || 3),
+          totalDays: parsed.totalDays || parsed.days?.length || 3,
           estimatedBudget: parsed.budget || '¥1,500 ~ ¥2,500',
-          summary: parsed.summary || 'AI 深度定制的手账旅行路线，不赶路，更惬意。',
-          days: Array.isArray(parsed.days) && parsed.days[0]?.nodes
-            ? parsed.days
-            : generateDefaultDays(parsed.destination || '杭州', parsed.totalDays || 3),
+          summary:
+            parsed.summary || 'AI 深度定制的手账旅行路线，不赶路，更惬意。',
+          days:
+            Array.isArray(parsed.days) && parsed.days[0]?.nodes
+              ? parsed.days
+              : generateDefaultDays(
+                  parsed.destination || '杭州',
+                  parsed.totalDays || 3,
+                ),
           createdAt: Date.now(),
         };
         setPlan(formatted);
@@ -81,7 +86,12 @@ export default function ItineraryDetailScreen() {
   function generateDefaultDays(dest: string, total: number): ItineraryDay[] {
     return Array.from({ length: total }, (_, i) => ({
       day: i + 1,
-      theme: i === 0 ? '初见江南 · 经典漫步' : i === 1 ? '烟火寻味 · 文化探秘' : '慢调归途 · 惬意小憩',
+      theme:
+        i === 0
+          ? '初见江南 · 经典漫步'
+          : i === 1
+            ? '烟火寻味 · 文化探秘'
+            : '慢调归途 · 惬意小憩',
       nodes: [
         {
           id: `d${i + 1}_n1`,
@@ -116,13 +126,15 @@ export default function ItineraryDetailScreen() {
   const handleSave = async () => {
     if (!plan) return;
     await savePlan(plan);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+      () => {},
+    );
     Alert.alert('手账已封存', '行程已成功保存在本地，断网亦可随时查看！');
   };
 
   const handleToggleNode = async (dayNum: number, nodeId: string) => {
     if (!plan) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     await toggleNodeVisited(plan.id, dayNum, nodeId);
 
     // 本地 state 同步更新
@@ -135,7 +147,7 @@ export default function ItineraryDetailScreen() {
           return {
             ...d,
             nodes: d.nodes.map((n) =>
-              n.id === nodeId ? { ...n, visited: !n.visited } : n
+              n.id === nodeId ? { ...n, visited: !n.visited } : n,
             ),
           };
         }),
@@ -190,8 +202,18 @@ export default function ItineraryDetailScreen() {
         {/* 手账封面板 */}
         <JournalCard style={styles.coverCard} variant="warm">
           <View style={styles.coverTopRow}>
-            <StampBadge label={`${plan.totalDays} 日漫游`} color="red" size="md" rotation={-5} />
-            <StampBadge label={plan.destination} color="blue" size="md" rotation={3} />
+            <StampBadge
+              label={`${plan.totalDays} 日漫游`}
+              color="red"
+              size="md"
+              rotation={-5}
+            />
+            <StampBadge
+              label={plan.destination}
+              color="blue"
+              size="md"
+              rotation={3}
+            />
           </View>
 
           <Text style={styles.planTitle}>{plan.title}</Text>
@@ -205,7 +227,9 @@ export default function ItineraryDetailScreen() {
                 color={JournalTheme.colors.primary}
               />
               <Text style={styles.metaLabel}>预估开销：</Text>
-              <Text style={styles.metaValue}>{plan.estimatedBudget || '¥1,800'}</Text>
+              <Text style={styles.metaValue}>
+                {plan.estimatedBudget || '¥1,800'}
+              </Text>
             </View>
 
             <View style={styles.metaItem}>
@@ -230,7 +254,7 @@ export default function ItineraryDetailScreen() {
                   key={d.day}
                   style={[styles.dayTab, isActive && styles.dayTabActive]}
                   onPress={() => {
-                    Haptics.selectionAsync().catch(() => { });
+                    Haptics.selectionAsync().catch(() => {});
                     setActiveDayIndex(index);
                   }}
                   activeOpacity={0.8}
@@ -298,7 +322,12 @@ export default function ItineraryDetailScreen() {
                       style={styles.stampActionWrap}
                     >
                       {node.visited ? (
-                        <StampBadge label="已打卡" color="red" size="sm" rotation={-6} />
+                        <StampBadge
+                          label="已打卡"
+                          color="red"
+                          size="sm"
+                          rotation={-6}
+                        />
                       ) : (
                         <View style={styles.unvisitedBadge}>
                           <Ionicons
@@ -575,4 +604,3 @@ const styles = StyleSheet.create({
     marginTop: Spacing.four,
   },
 });
-

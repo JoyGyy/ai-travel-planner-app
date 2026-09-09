@@ -140,7 +140,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             set({ isGenerating: false, abortController: null });
           },
         },
-        controller.signal
+        controller.signal,
       );
     } catch {
       set({ isGenerating: false, abortController: null });
@@ -170,4 +170,3 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
   },
 }));
-

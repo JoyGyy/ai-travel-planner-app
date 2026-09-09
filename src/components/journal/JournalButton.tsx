@@ -41,7 +41,7 @@ export function JournalButton({
 }: JournalButtonProps) {
   const handlePress = (e: any) => {
     if (haptic) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     }
     onPress?.(e);
   };
@@ -85,18 +85,30 @@ export function JournalButton({
     switch (size) {
       case 'sm':
         return {
-          btn: { height: 36, paddingHorizontal: Spacing.three, borderRadius: JournalTheme.radii.sm },
+          btn: {
+            height: 36,
+            paddingHorizontal: Spacing.three,
+            borderRadius: JournalTheme.radii.sm,
+          },
           text: { fontSize: 13 },
         };
       case 'lg':
         return {
-          btn: { height: 52, paddingHorizontal: Spacing.five, borderRadius: JournalTheme.radii.lg },
+          btn: {
+            height: 52,
+            paddingHorizontal: Spacing.five,
+            borderRadius: JournalTheme.radii.lg,
+          },
           text: { fontSize: 17 },
         };
       case 'md':
       default:
         return {
-          btn: { height: 44, paddingHorizontal: Spacing.four, borderRadius: JournalTheme.radii.md },
+          btn: {
+            height: 44,
+            paddingHorizontal: Spacing.four,
+            borderRadius: JournalTheme.radii.md,
+          },
           text: { fontSize: 15 },
         };
     }
@@ -124,7 +136,15 @@ export function JournalButton({
       ) : (
         <>
           {icon}
-          <Text style={[styles.text, vStyles.text, sStyles.text, !!icon && styles.textWithIcon, textStyle]}>
+          <Text
+            style={[
+              styles.text,
+              vStyles.text,
+              sStyles.text,
+              !!icon && styles.textWithIcon,
+              textStyle,
+            ]}
+          >
             {title}
           </Text>
         </>
@@ -149,4 +169,3 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.one,
   },
 });
-

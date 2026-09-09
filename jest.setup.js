@@ -34,9 +34,9 @@ jest.mock('@react-native-async-storage/async-storage', () => {
 
 // Mock Haptics
 jest.mock('expo-haptics', () => ({
-  impactAsync: jest.fn(async () => { }),
-  selectionAsync: jest.fn(async () => { }),
-  notificationAsync: jest.fn(async () => { }),
+  impactAsync: jest.fn(async () => {}),
+  selectionAsync: jest.fn(async () => {}),
+  notificationAsync: jest.fn(async () => {}),
   ImpactFeedbackStyle: {
     Light: 'light',
     Medium: 'medium',
@@ -59,7 +59,9 @@ jest.mock('expo-location', () => ({
     Highest: 5,
     BestForNavigation: 6,
   },
-  requestForegroundPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  requestForegroundPermissionsAsync: jest.fn(async () => ({
+    status: 'granted',
+  })),
   getCurrentPositionAsync: jest.fn(async () => ({
     coords: {
       latitude: 39.9042,

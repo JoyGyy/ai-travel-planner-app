@@ -1,4 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { JournalButton } from '@/components/journal/JournalButton';
+import { JournalCard } from '@/components/journal/JournalCard';
+import { StampBadge } from '@/components/journal/StampBadge';
+import { JournalTheme, Spacing } from '@/constants/theme';
+import { WeatherData, WeatherService } from '@/services/weather-service';
+import { useAuthStore } from '@/stores/use-auth-store';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -9,23 +17,39 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { JournalTheme, Spacing } from '@/constants/theme';
-import { JournalCard } from '@/components/journal/JournalCard';
-import { StampBadge } from '@/components/journal/StampBadge';
-import { JournalButton } from '@/components/journal/JournalButton';
-import { WeatherData, WeatherService } from '@/services/weather-service';
-import { useAuthStore } from '@/stores/use-auth-store';
 
 // 灵感盲盒快捷 Prompt 胶囊
 const INSPIRATION_CAPSULES = [
-  { id: '1', title: '🍃 杭州 3 日慢节奏江南游', prompt: '我想去杭州玩3天，希望是慢节奏、文艺轻松的路线，包括西湖周边和特色茶舍。' },
-  { id: '2', title: '🌶️ 成都周末 48 小时美食特种兵', prompt: '计划去成都度过周末48小时，主打地道川味美食、茶馆和拍照打卡。' },
-  { id: '3', title: '🌊 三亚 4 天海岛度假漫游', prompt: '去三亚4天3晚，追求高性价比与海滩放松，预算3000元以内，求避坑建议。' },
-  { id: '4', title: '🏮 西安古都汉服与历史寻踪', prompt: '3天时间去西安，想体验汉服夜游大唐不夜城、参观兵马俑和陕博，求路线安排。' },
-  { id: '5', title: '🏔️ 川西 5 日小众秘境自驾', prompt: '川西5天自驾行程，想要雪山草甸与小众打卡点，注意高反防护与沿途食宿。' },
+  {
+    id: '1',
+    title: '🍃 杭州市 3 日慢节奏江南游',
+    prompt:
+      '我想去杭州玩3天，希望是慢节奏、文艺轻松的路线，包括西湖周边和特色茶舍。',
+  },
+  {
+    id: '2',
+    title: '🌶️ 成都周末 48 小时美食特种兵',
+    prompt: '计划去成都度过周末48小时，主打地道川味美食、茶馆和拍照打卡。',
+  },
+  {
+    id: '3',
+    title: '🌊 三亚 4 天海岛度假漫游',
+    prompt:
+      '去三亚4天3晚，追求高性价比与海滩放松，预算3000元以内，求避坑建议。',
+  },
+  {
+    id: '4',
+    title: '🏮 西安古都汉服与历史寻踪',
+    prompt:
+      '3天时间去西安，想体验汉服夜游大唐不夜城、参观兵马俑和陕博，求路线安排。',
+  },
+  {
+    id: '5',
+    title: '🏔️ 川西 5 日小众秘境自驾',
+    prompt:
+      '川西5天自驾行程，想要雪山草甸与小众打卡点，注意高反防护与沿途食宿。',
+  },
 ];
 
 // 精选目的地手账卡片
@@ -36,9 +60,11 @@ const FEATURED_DESTINATIONS = [
     days: '3-4 天',
     budget: '¥1,500 ~ ¥2,500',
     tags: ['江南水乡', '龙井问茶', '骑行漫游'],
-    image: 'https://images.unsplash.com/photo-1599571234909-29ed5d1321d6?q=80&w=800&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1599571234909-29ed5d1321d6?q=80&w=800&auto=format&fit=crop',
     description: '漫步西湖杨公堤，在满觉陇寻一处清幽茶社，享受微风与慢时光。',
-    prompt: '我想去杭州深度游玩3天，请结合西湖周边与灵隐祈福为我制定详细手账行程。',
+    prompt:
+      '我想去杭州深度游玩3天，请结合西湖周边与灵隐祈福为我制定详细手账行程。',
   },
   {
     id: 'cd',
@@ -46,8 +72,10 @@ const FEATURED_DESTINATIONS = [
     days: '2-3 天',
     budget: '¥1,200 ~ ¥2,000',
     tags: ['地道小吃', '盖碗茶', '大熊猫'],
-    image: 'https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?q=80&w=800&auto=format&fit=crop',
-    description: '人民公园喝一杯鹤鸣盖碗茶，穿梭在宽窄巷子的老街深处品尝糖油果子。',
+    image:
+      'https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?q=80&w=800&auto=format&fit=crop',
+    description:
+      '人民公园喝一杯鹤鸣盖碗茶，穿梭在宽窄巷子的老街深处品尝糖油果子。',
     prompt: '我想去成都吃喝玩乐2天，请帮我规划一份不赶路的地道美食手账攻略。',
   },
   {
@@ -56,7 +84,8 @@ const FEATURED_DESTINATIONS = [
     days: '4-5 天',
     budget: '¥3,000 ~ ¥5,000',
     tags: ['海风椰林', '落日帆船', '海鲜排档'],
-    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
     description: '在太阳湾沿海公路迎风自驾，傍晚静候椰梦长廊的橘红色落日晚霞。',
     prompt: '帮我设计一份三亚4天度假行程，重点在海景拍照、小众海滩与平价海鲜。',
   },
@@ -131,7 +160,11 @@ export default function HomeScreen() {
           <Ionicons
             name={user ? 'person-circle' : 'person-circle-outline'}
             size={34}
-            color={user ? JournalTheme.colors.primary : JournalTheme.colors.textSecondary}
+            color={
+              user
+                ? JournalTheme.colors.primary
+                : JournalTheme.colors.textSecondary
+            }
           />
         </TouchableOpacity>
       </View>
@@ -157,15 +190,27 @@ export default function HomeScreen() {
                 color={JournalTheme.colors.primary}
               />
               <Text style={styles.cityName}>{city}</Text>
-              <StampBadge label="当前位置" color="primary" size="sm" rotation={-4} />
+              <StampBadge
+                label="当前位置"
+                color="primary"
+                size="sm"
+                rotation={-4}
+              />
             </View>
 
             {loadingWeather ? (
-              <ActivityIndicator size="small" color={JournalTheme.colors.primary} />
+              <ActivityIndicator
+                size="small"
+                color={JournalTheme.colors.primary}
+              />
             ) : (
               <View style={styles.tempRow}>
                 <Ionicons
-                  name={weather?.condition.includes('雨') ? 'rainy-outline' : 'sunny-outline'}
+                  name={
+                    weather?.condition.includes('雨')
+                      ? 'rainy-outline'
+                      : 'sunny-outline'
+                  }
                   size={20}
                   color={JournalTheme.colors.primary}
                   style={{ marginRight: 4 }}
@@ -210,7 +255,12 @@ export default function HomeScreen() {
         <JournalCard style={styles.aiBannerCard}>
           <View style={styles.aiBannerContent}>
             <View style={styles.aiBannerLeft}>
-              <StampBadge label="AI 旅行顾问" color="red" size="sm" rotation={-6} />
+              <StampBadge
+                label="AI 旅行顾问"
+                color="red"
+                size="sm"
+                rotation={-6}
+              />
               <Text style={styles.aiBannerTitle}>你想去哪里旅行？</Text>
               <Text style={styles.aiBannerDesc}>
                 告诉我目的地、天数或预算，AI 将为你规划结构化手账日程
@@ -254,7 +304,12 @@ export default function HomeScreen() {
             <View style={styles.destBody}>
               <View style={styles.destHeaderRow}>
                 <Text style={styles.destName}>{dest.name}</Text>
-                <StampBadge label={dest.days} color="blue" size="sm" rotation={4} />
+                <StampBadge
+                  label={dest.days}
+                  color="blue"
+                  size="sm"
+                  rotation={4}
+                />
               </View>
 
               <View style={styles.destTagsRow}>
@@ -496,4 +551,3 @@ const styles = StyleSheet.create({
     color: JournalTheme.colors.primary,
   },
 });
-

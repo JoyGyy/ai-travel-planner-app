@@ -11,6 +11,7 @@
 ## 1. 架构总览与设计原则
 
 ### 1.1 总体架构分层
+
 整个移动端系统采用分层松耦合架构，严格遵循**关注点分离（SoC）**原则：
 
 ```text
@@ -37,6 +38,7 @@
 ```
 
 ### 1.2 核心设计原则
+
 1. **模块化实施与测试先行**：每个模块独立成包，具备清晰的输入输出、状态契约及对应单元测试，杜绝巨石式代码堆砌。
 2. **手账美学贯穿始终**：设计系统以温暖纸质色调、手写字体感觉、明信片拍立得、微触感图章为核心视觉资产，保持高辨识度。
 3. **渐进式鉴权与在途高可用**：免登录友好体验，关键行程数据双写本地（AsyncStorage），断网环境自动降级使用离线快照。
@@ -61,6 +63,7 @@
 ---
 
 ### 模块 1：服务端 Bearer Token 兼容改造与测试
+
 - **所属项目**：`ai-travel-planner`
 - **设计目标**：在完全不破坏现有 Web 端 Cookie + CSRF 机制的前提下，使全站 API 支持移动端标准的 `Authorization: Bearer <token>` 请求头。
 - **改动范围**：
@@ -75,6 +78,7 @@
 ---
 
 ### 模块 2：App 基础设施与网络请求层
+
 - **所属项目**：`ai-travel-planner-app`
 - **依赖选型**：
   - `zustand`: 全局轻量状态流。
@@ -96,6 +100,7 @@
 ---
 
 ### 模块 3：用户鉴权与状态管理 (Auth Module)
+
 - **设计规范**：
   - **状态模型 (`src/stores/use-auth-store.ts`)**：
     ```typescript
@@ -120,19 +125,20 @@
 ---
 
 ### 模块 4：手账美学设计系统与 Tab 导航框架
+
 - **设计主题规范 (`src/constants/theme.ts`)**：
   ```typescript
   export const JournalTheme = {
     colors: {
-      background: '#FAF8F5',      // 温暖米白纸质底
-      surface: '#FFFFFF',         // 纯白手账卡片
-      primary: '#E07A5F',         // 暖金赤陶主色
-      secondary: '#3D5A80',       // 邮戳深蓝
-      accent: '#2A9D8F',          // 森林绿（大自然）
-      textPrimary: '#2B2D42',     // 炭黑字墨水感
-      textSecondary: '#8D99AE',   // 浅铅灰次级文字
-      border: '#E8E1D9',          // 纸张微边框
-      stampRed: '#C94A4A',        // 印章红
+      background: '#FAF8F5', // 温暖米白纸质底
+      surface: '#FFFFFF', // 纯白手账卡片
+      primary: '#E07A5F', // 暖金赤陶主色
+      secondary: '#3D5A80', // 邮戳深蓝
+      accent: '#2A9D8F', // 森林绿（大自然）
+      textPrimary: '#2B2D42', // 炭黑字墨水感
+      textSecondary: '#8D99AE', // 浅铅灰次级文字
+      border: '#E8E1D9', // 纸张微边框
+      stampRed: '#C94A4A', // 印章红
     },
     radii: {
       sm: 8,
@@ -156,6 +162,7 @@
 ---
 
 ### 模块 5：首页灵感与定位天气模块 (Home Tab)
+
 - **主要逻辑**：
   1. **定位与天气**：
      - 使用 `expo-location` 触发 `requestForegroundPermissionsAsync`，获取经纬度匹配当前城市。
@@ -172,6 +179,7 @@
 ---
 
 ### 模块 6：AI 旅行规划流式对话模块 (Chat Tab) —— ★核心引擎
+
 - **SSE 流式数据协议解析 (`src/services/chat-stream.ts`)**：
   - 后端 `/api/travel/chat` 输出为标准 SSE（Server-Sent Events）格式。
   - 数据块包含：`data: {"type":"chunk","content":"..."}`、`data: {"type":"thought","content":"..."}`（思考过程）、`data: {"type":"plan","content":{...}}`（结构化行程 JSON）。
@@ -190,6 +198,7 @@
 ---
 
 ### 模块 7：行程手账详情与离线管理模块 (Itinerary & Offline)
+
 - **数据结构与持久化 (`src/stores/use-itinerary-store.ts`)**：
   - `ItineraryPlan`: 包含 `id`、`title`、`destination`、`days: ItineraryDay[]`、`budget`、`createdAt`。
   - `ItineraryDay`: 包含 `dayNumber`、`date`、`nodes: ItineraryNode[]`（时间、地点、交通、标签、是否打卡盖章）。
@@ -204,6 +213,7 @@
 ---
 
 ### 模块 8：发现与景点探索模块 (Explore Tab)
+
 - **服务层 (`src/services/attractions-service.ts`)**：
   - `getCities()`: 获取城市列表与热门筛选。
   - `getAttractions(cityId?, category?, keyword?)`: 景点列表与分页检索。
@@ -222,6 +232,7 @@
 ---
 
 ### 模块 9：个人中心与全链路集成验收 (Profile & Polish)
+
 - **页面设计 (`src/app/(tabs)/profile.tsx`)**：
   - **用户卡片**：已登录展示头像与昵称；未登录展示“登录/注册以同步行程”按钮。
   - **数据看板**：已保存行程数、收藏景点数。
@@ -237,6 +248,7 @@
 ## 3. 数据模型与接口契约规范
 
 ### 3.1 核心类型定义 (TypeScript)
+
 ```typescript
 // 用户模型
 export interface UserProfile {
@@ -275,22 +287,24 @@ export interface ItineraryPlan {
 ```
 
 ### 3.2 API 交互总表
-| 业务分类 | 端点路径 | 方法 | 鉴权要求 | 移动端处理策略 |
-| :--- | :--- | :--- | :--- | :--- |
-| 认证-登录 | `/api/auth/login` | `POST` | 公开 | 返回 JWT，存入 SecureStore |
-| 认证-注册 | `/api/auth/register` | `POST` | 公开 | 注册成功自动写入 Token |
-| 认证-当前用户 | `/api/auth/me` | `GET` | Bearer Token | 启动时验证 Token 有效性 |
-| AI-流式规划 | `/api/travel/chat` | `POST` | 可选/Bearer | SSE 流式接收，带 AbortController |
-| 景点-城市列表 | `/api/cities` | `GET` | 公开 | 离线可缓存至 AsyncStorage |
-| 景点-列表检索 | `/api/attractions` | `GET` | 公开 | 支持城市与分类多维查询 |
-| 景点-收藏状态 | `/api/attractions/[id]/favorite` | `POST` | Bearer Token | 收藏成功触发 Haptic 反馈 |
-| 天气查询 | `/api/weather?city=...` | `GET` | 公开 | 配合 GPS 坐标反查实时展现 |
+
+| 业务分类      | 端点路径                         | 方法   | 鉴权要求     | 移动端处理策略                   |
+| :------------ | :------------------------------- | :----- | :----------- | :------------------------------- |
+| 认证-登录     | `/api/auth/login`                | `POST` | 公开         | 返回 JWT，存入 SecureStore       |
+| 认证-注册     | `/api/auth/register`             | `POST` | 公开         | 注册成功自动写入 Token           |
+| 认证-当前用户 | `/api/auth/me`                   | `GET`  | Bearer Token | 启动时验证 Token 有效性          |
+| AI-流式规划   | `/api/travel/chat`               | `POST` | 可选/Bearer  | SSE 流式接收，带 AbortController |
+| 景点-城市列表 | `/api/cities`                    | `GET`  | 公开         | 离线可缓存至 AsyncStorage        |
+| 景点-列表检索 | `/api/attractions`               | `GET`  | 公开         | 支持城市与分类多维查询           |
+| 景点-收藏状态 | `/api/attractions/[id]/favorite` | `POST` | Bearer Token | 收藏成功触发 Haptic 反馈         |
+| 天气查询      | `/api/weather?city=...`          | `GET`  | 公开         | 配合 GPS 坐标反查实时展现        |
 
 ---
 
 ## 4. 测试与质量保证策略
 
 ### 4.1 测试分层体系
+
 1. **单元测试 (Unit Tests)**：
    - 使用 `jest` + `@testing-library/react-native`。
    - 覆盖所有工具函数、状态 Store、网络拦截器、SSE 解析器。
@@ -301,6 +315,7 @@ export interface ItineraryPlan {
    - 在 `ai-travel-planner` 中使用 `vitest` 运行全套测试，确保修改 `auth.ts` / `http.ts` 后现有 Web 端功能 0 破坏。
 
 ### 4.2 质量卡点规范
+
 - 任何模块在提交前必须满足：
   1. `npm test`（或 `pnpm test:run`）测试全部通过，无失败用例。
   2. TypeScript 严格类型检查通过（无 `any` 滥用，无类型错误）。
@@ -311,6 +326,7 @@ export interface ItineraryPlan {
 ## 5. 总结与执行交付顺序
 
 所有模块将严格按照以下次序闭环执行：
+
 1. **[模块 1]** 后端 `auth.ts` 与 `http.ts` 改造支持 Bearer Token，并通过 Vitest 测试。
 2. **[模块 2]** App 安装必要基础设施依赖，构建 `api-client`、`auth-storage` 及单元测试。
 3. **[模块 3]** App 实现 `useAuthStore`、登录注册界面与测试。
@@ -320,4 +336,3 @@ export interface ItineraryPlan {
 7. **[模块 7]** App 实现行程手账详情、Day-by-Day 时间轴与离线存储及测试。
 8. **[模块 8]** App 实现景点探索、城市筛选与轻触收藏及测试。
 9. **[模块 9]** App 实现个人中心、缓存管理与双端全链路综合验收。
-

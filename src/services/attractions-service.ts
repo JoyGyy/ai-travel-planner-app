@@ -45,15 +45,20 @@ export const AttractionsService = {
   }): Promise<AttractionItem[]> {
     try {
       const cleanParams: Record<string, string | number> = {};
-      if (params?.city && params.city !== '全部') cleanParams.city = params.city;
+      if (params?.city && params.city !== '全部')
+        cleanParams.city = params.city;
       if (params?.category && params.category !== '全部')
         cleanParams.category = params.category;
       if (params?.keyword?.trim()) cleanParams.keyword = params.keyword.trim();
       if (params?.limit) cleanParams.limit = params.limit;
 
-      const res = await apiClient.get<any>(API_ENDPOINTS.ATTRACTIONS, cleanParams, {
-        skipAuth: true,
-      });
+      const res = await apiClient.get<any>(
+        API_ENDPOINTS.ATTRACTIONS,
+        cleanParams,
+        {
+          skipAuth: true,
+        },
+      );
 
       const list = res?.data?.list || res?.data || res?.attractions || res;
       if (Array.isArray(list)) {
@@ -89,7 +94,7 @@ export const AttractionsService = {
       const res = await apiClient.get<any>(
         API_ENDPOINTS.ATTRACTION_DETAIL(id),
         undefined,
-        { skipAuth: true }
+        { skipAuth: true },
       );
       const data = res?.data || res;
       if (!data) return null;
@@ -117,7 +122,7 @@ export const AttractionsService = {
   async toggleFavorite(id: string): Promise<boolean> {
     try {
       const res = await apiClient.post<any>(
-        API_ENDPOINTS.ATTRACTION_FAVORITE(id)
+        API_ENDPOINTS.ATTRACTION_FAVORITE(id),
       );
       return res?.isFavorite ?? true;
     } catch (e) {
@@ -138,4 +143,3 @@ export const AttractionsService = {
     }
   },
 };
-

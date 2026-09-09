@@ -24,7 +24,7 @@ export const ChatStreamService = {
   async streamChat(
     messages: ChatMessagePayload[],
     callbacks: ChatStreamCallbacks,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): Promise<void> {
     const url = `${API_BASE_URL.replace(/\/$/, '')}${API_ENDPOINTS.TRAVEL_CHAT}`;
 
@@ -63,7 +63,10 @@ export const ChatStreamService = {
     }
 
     // 处理流式 ReadableStream
-    if (response.body && typeof (response.body as any).getReader === 'function') {
+    if (
+      response.body &&
+      typeof (response.body as any).getReader === 'function'
+    ) {
       const reader = (response.body as any).getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -103,7 +106,7 @@ export const ChatStreamService = {
     const hasTrailingNewline = buffer.endsWith('\n');
     const lines = buffer.split('\n');
     // 若以换行结尾，所有行均已完整闭合；否则暂存末尾未完成的片段
-    const remaining = hasTrailingNewline ? '' : (lines.pop() || '');
+    const remaining = hasTrailingNewline ? '' : lines.pop() || '';
 
     for (const line of lines) {
       const trimmed = line.trim();

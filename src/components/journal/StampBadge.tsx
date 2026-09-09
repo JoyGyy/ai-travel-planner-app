@@ -41,12 +41,27 @@ export function StampBadge({
   const getDimensions = () => {
     switch (size) {
       case 'sm':
-        return { paddingVertical: 2, paddingHorizontal: 6, fontSize: 10, borderWidth: 1 };
+        return {
+          paddingVertical: 2,
+          paddingHorizontal: 6,
+          fontSize: 10,
+          borderWidth: 1,
+        };
       case 'lg':
-        return { paddingVertical: 6, paddingHorizontal: 16, fontSize: 14, borderWidth: 2 };
+        return {
+          paddingVertical: 6,
+          paddingHorizontal: 16,
+          fontSize: 14,
+          borderWidth: 2,
+        };
       case 'md':
       default:
-        return { paddingVertical: 4, paddingHorizontal: 10, fontSize: 12, borderWidth: 1.5 };
+        return {
+          paddingVertical: 4,
+          paddingHorizontal: 10,
+          fontSize: 12,
+          borderWidth: 1.5,
+        };
     }
   };
 
@@ -66,7 +81,9 @@ export function StampBadge({
         style,
       ]}
     >
-      <Text style={[styles.text, { color: stampColor, fontSize: dim.fontSize }]}>
+      <Text
+        style={[styles.text, { color: stampColor, fontSize: dim.fontSize }]}
+      >
         {label}
       </Text>
     </View>
@@ -86,4 +103,3 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 });
-

@@ -59,13 +59,27 @@ export function ItinerarySummaryCard({
         <View style={styles.titleWrap}>
           <Text style={styles.title}>{title}</Text>
           <View style={styles.badgeRow}>
-            <StampBadge label={`${daysCount} 日游`} color="primary" size="sm" rotation={-3} />
+            <StampBadge
+              label={`${daysCount} 日游`}
+              color="primary"
+              size="sm"
+              rotation={-3}
+            />
             {plan.destination ? (
-              <StampBadge label={plan.destination} color="blue" size="sm" rotation={2} />
+              <StampBadge
+                label={plan.destination}
+                color="blue"
+                size="sm"
+                rotation={2}
+              />
             ) : null}
           </View>
         </View>
-        <Ionicons name="map-outline" size={32} color={JournalTheme.colors.primary} />
+        <Ionicons
+          name="map-outline"
+          size={32}
+          color={JournalTheme.colors.primary}
+        />
       </View>
 
       <View style={styles.divider} />
@@ -185,4 +199,3 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-

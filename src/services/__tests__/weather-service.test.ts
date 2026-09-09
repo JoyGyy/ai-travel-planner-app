@@ -35,7 +35,9 @@ describe('WeatherService', () => {
   });
 
   it('getWeather 接口异常时返回兜底数据而不崩溃', async () => {
-    (apiClient.get as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+    (apiClient.get as jest.Mock).mockRejectedValueOnce(
+      new Error('Network error'),
+    );
 
     const result = await WeatherService.getWeather('成都');
 
@@ -44,4 +46,3 @@ describe('WeatherService', () => {
     expect(result.condition).toBe('晴朗');
   });
 });
-

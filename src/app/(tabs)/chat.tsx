@@ -30,7 +30,9 @@ export default function ChatScreen() {
     useChatStore();
 
   const [input, setInput] = useState('');
-  const [expandedThoughts, setExpandedThoughts] = useState<Record<string, boolean>>({});
+  const [expandedThoughts, setExpandedThoughts] = useState<
+    Record<string, boolean>
+  >({});
   const flatListRef = useRef<FlatList>(null);
 
   // 处理从首页或外部带入的 prompt
@@ -424,4 +426,3 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
 });
-

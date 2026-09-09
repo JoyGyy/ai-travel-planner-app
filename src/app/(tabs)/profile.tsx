@@ -26,7 +26,9 @@ export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
   const { savedPlans, loadSavedPlans, removePlan } = useItineraryStore();
 
-  const [activeTab, setActiveTab] = useState<'itineraries' | 'favorites'>('itineraries');
+  const [activeTab, setActiveTab] = useState<'itineraries' | 'favorites'>(
+    'itineraries',
+  );
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -51,17 +53,23 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert('退出登录', '确定要退出当前旅行家账号吗？本地已保存的离线手账将继续保留。', [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '退出',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
+    Alert.alert(
+      '退出登录',
+      '确定要退出当前旅行家账号吗？本地已保存的离线手账将继续保留。',
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '退出',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            Haptics.notificationAsync(
+              Haptics.NotificationFeedbackType.Success,
+            ).catch(() => {});
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const handleClearCache = async () => {
@@ -87,7 +95,9 @@ export default function ProfileScreen() {
         style: 'destructive',
         onPress: async () => {
           await removePlan(plan.id);
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
+            () => {},
+          );
         },
       },
     ]);
@@ -122,8 +132,18 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.itineraryBadgeRow}>
-          <StampBadge label={item.destination || '旅行目的地'} color="primary" size="sm" rotation={-2} />
-          <StampBadge label={`${item.totalDays || item.days.length} 日游`} color="blue" size="sm" rotation={2} />
+          <StampBadge
+            label={item.destination || '旅行目的地'}
+            color="primary"
+            size="sm"
+            rotation={-2}
+          />
+          <StampBadge
+            label={`${item.totalDays || item.days.length} 日游`}
+            color="blue"
+            size="sm"
+            rotation={2}
+          />
         </View>
 
         <Text style={styles.itinerarySummary} numberOfLines={2}>
@@ -135,7 +155,11 @@ export default function ProfileScreen() {
             保存于 {new Date(item.createdAt).toLocaleDateString()}
           </Text>
           <View style={styles.offlineStatus}>
-            <Ionicons name="checkmark-circle" size={14} color={JournalTheme.colors.accent} />
+            <Ionicons
+              name="checkmark-circle"
+              size={14}
+              color={JournalTheme.colors.accent}
+            />
             <Text style={styles.offlineText}>离线可用</Text>
           </View>
         </View>
@@ -181,7 +205,12 @@ export default function ProfileScreen() {
                     <>
                       <Text style={styles.username}>{user.username}</Text>
                       <View style={styles.userBadgeWrap}>
-                        <StampBadge label="手账探索家" color="primary" size="sm" rotation={-3} />
+                        <StampBadge
+                          label="手账探索家"
+                          color="primary"
+                          size="sm"
+                          rotation={-3}
+                        />
                       </View>
                     </>
                   ) : (
@@ -242,7 +271,7 @@ export default function ProfileScreen() {
                   activeTab === 'itineraries' && styles.tabBtnActive,
                 ]}
                 onPress={() => {
-                  Haptics.selectionAsync().catch(() => { });
+                  Haptics.selectionAsync().catch(() => {});
                   setActiveTab('itineraries');
                 }}
               >
@@ -262,7 +291,7 @@ export default function ProfileScreen() {
                   activeTab === 'favorites' && styles.tabBtnActive,
                 ]}
                 onPress={() => {
-                  Haptics.selectionAsync().catch(() => { });
+                  Haptics.selectionAsync().catch(() => {});
                   setActiveTab('favorites');
                 }}
               >
@@ -281,7 +310,9 @@ export default function ProfileScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons
-              name={activeTab === 'itineraries' ? 'book-outline' : 'heart-outline'}
+              name={
+                activeTab === 'itineraries' ? 'book-outline' : 'heart-outline'
+              }
               size={48}
               color={JournalTheme.colors.textSecondary}
             />
@@ -339,7 +370,9 @@ export default function ProfileScreen() {
                 />
                 <Text style={styles.settingLabel}>版本信息</Text>
               </View>
-              <Text style={styles.settingValue}>AI 旅行手账 v1.0.0 (Expo 57)</Text>
+              <Text style={styles.settingValue}>
+                AI 旅行手账 v1.0.0 (Expo 57)
+              </Text>
             </View>
           </View>
         }
@@ -564,4 +597,3 @@ const styles = StyleSheet.create({
     color: JournalTheme.colors.textSecondary,
   },
 });
-

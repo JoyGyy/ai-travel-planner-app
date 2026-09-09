@@ -44,7 +44,11 @@ export interface ItineraryState {
   removePlan: (id: string) => Promise<void>;
 
   /** 切换行程某个节点的打卡状态 */
-  toggleNodeVisited: (planId: string, dayNumber: number, nodeId: string) => Promise<void>;
+  toggleNodeVisited: (
+    planId: string,
+    dayNumber: number,
+    nodeId: string,
+  ) => Promise<void>;
 
   /** 获取指定 ID 的行程（优先内存，再查本地） */
   getPlanById: (id: string) => ItineraryPlan | undefined;
@@ -99,7 +103,11 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
     }
   },
 
-  toggleNodeVisited: async (planId: string, dayNumber: number, nodeId: string) => {
+  toggleNodeVisited: async (
+    planId: string,
+    dayNumber: number,
+    nodeId: string,
+  ) => {
     const plans = get().savedPlans;
     const plan = plans.find((p) => p.id === planId);
     if (!plan) return;
@@ -109,7 +117,7 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
       return {
         ...d,
         nodes: d.nodes.map((n) =>
-          n.id === nodeId ? { ...n, visited: !n.visited } : n
+          n.id === nodeId ? { ...n, visited: !n.visited } : n,
         ),
       };
     });
@@ -122,4 +130,3 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
     return get().savedPlans.find((p) => p.id === id);
   },
 }));
-

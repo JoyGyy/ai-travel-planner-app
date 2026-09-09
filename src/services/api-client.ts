@@ -90,7 +90,7 @@ export const apiClient = {
   async get<T>(
     endpoint: string,
     params?: Record<string, string | number | boolean | undefined>,
-    options?: Omit<RequestOptions, 'params' | 'method'>
+    options?: Omit<RequestOptions, 'params' | 'method'>,
   ): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'GET',
@@ -103,7 +103,7 @@ export const apiClient = {
   async post<T>(
     endpoint: string,
     body?: unknown,
-    options?: Omit<RequestOptions, 'body' | 'method'>
+    options?: Omit<RequestOptions, 'body' | 'method'>,
   ): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
@@ -115,7 +115,7 @@ export const apiClient = {
   /** DELETE 请求快捷方法 */
   async delete<T>(
     endpoint: string,
-    options?: Omit<RequestOptions, 'method'>
+    options?: Omit<RequestOptions, 'method'>,
   ): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'DELETE',
@@ -123,4 +123,3 @@ export const apiClient = {
     });
   },
 };
-

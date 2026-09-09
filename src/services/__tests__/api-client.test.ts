@@ -18,7 +18,9 @@ describe('apiClient', () => {
       json: async () => ({ success: true, data: ['北京', '上海'] }),
     });
 
-    const result = await apiClient.get<{ success: boolean; data: string[] }>('/api/cities');
+    const result = await apiClient.get<{ success: boolean; data: string[] }>(
+      '/api/cities',
+    );
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(result.data).toEqual(['北京', '上海']);
