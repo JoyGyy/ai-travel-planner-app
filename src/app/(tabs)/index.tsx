@@ -122,7 +122,7 @@ export default function HomeScreen() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const currentCity = await WeatherService.getCurrentCity();
+      const currentCity = await WeatherService.getCurrentCity(false);
       setCity(currentCity);
       const wData = await WeatherService.getWeather(currentCity);
       setWeather(wData);
@@ -130,6 +130,20 @@ export default function HomeScreen() {
       // ignore
     } finally {
       setRefreshing(false);
+      setLoadingWeather(false);
+    }
+  };
+
+  const handleRequestLocation = async () => {
+    setLoadingWeather(true);
+    try {
+      const currentCity = await WeatherService.getCurrentCity(true);
+      setCity(currentCity);
+      const wData = await WeatherService.getWeather(currentCity);
+      setWeather(wData);
+    } catch {
+      // ignore
+    } finally {
       setLoadingWeather(false);
     }
   };
@@ -197,7 +211,12 @@ export default function HomeScreen() {
         >
           <JournalCard style={styles.weatherCard} variant="warm">
             <View style={styles.weatherTopRow}>
-              <View style={styles.cityLocationRow}>
+              <TouchableOpacity
+                style={styles.cityLocationRow}
+                onPress={handleRequestLocation}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <Ionicons
                   name="location-sharp"
                   size={16}
@@ -205,12 +224,12 @@ export default function HomeScreen() {
                 />
                 <Text style={styles.cityName}>{city}</Text>
                 <StampBadge
-                  label="当前位置"
+                  label="点击定位"
                   color="primary"
                   size="sm"
                   rotation={-4}
                 />
-              </View>
+              </TouchableOpacity>
 
               {loadingWeather ? (
                 <ActivityIndicator

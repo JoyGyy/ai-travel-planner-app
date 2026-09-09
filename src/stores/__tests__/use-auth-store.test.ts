@@ -7,6 +7,7 @@ jest.mock('@/services/api-client', () => ({
     get: jest.fn(),
     post: jest.fn(),
   },
+  setOnUnauthorizedHandler: jest.fn(),
 }));
 
 describe('useAuthStore', () => {

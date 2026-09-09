@@ -18,6 +18,15 @@ export interface RequestOptions extends RequestInit {
   skipAuth?: boolean;
 }
 
+type UnauthorizedHandler = () => void;
+let onUnauthorizedHandler: UnauthorizedHandler | null = null;
+
+export const setOnUnauthorizedHandler = (
+  handler: UnauthorizedHandler | null,
+) => {
+  onUnauthorizedHandler = handler;
+};
+
 export const apiClient = {
   /**
    * 通用网络请求核心方法
@@ -71,6 +80,10 @@ export const apiClient = {
     const json = await response.json().catch(() => ({}));
 
     if (!response.ok) {
+      if (response.status === 401 && !skipAuth) {
+        onUnauthorizedHandler?.();
+      }
+
       const errorMessage =
         json?.message ||
         (response.status === 401

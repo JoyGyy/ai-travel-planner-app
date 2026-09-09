@@ -25,10 +25,21 @@ export interface WeatherData {
 export const WeatherService = {
   /**
    * 获取当前设备位置对应的城市名
+   * @param requestPermission 是否在未授权时弹窗申请（默认为 false，启动时静默检查避免流氓弹窗）
    */
-  async getCurrentCity(): Promise<string> {
+  async getCurrentCity(requestPermission = false): Promise<string> {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      let status = 'undetermined';
+      if (typeof Location.getForegroundPermissionsAsync === 'function') {
+        const perm = await Location.getForegroundPermissionsAsync();
+        status = perm?.status || 'undetermined';
+      }
+
+      if (status !== 'granted' && requestPermission) {
+        const res = await Location.requestForegroundPermissionsAsync();
+        status = res.status;
+      }
+
       if (status !== 'granted') {
         return '北京';
       }

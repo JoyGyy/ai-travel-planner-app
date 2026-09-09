@@ -59,6 +59,9 @@ jest.mock('expo-location', () => ({
     Highest: 5,
     BestForNavigation: 6,
   },
+  getForegroundPermissionsAsync: jest.fn(async () => ({
+    status: 'granted',
+  })),
   requestForegroundPermissionsAsync: jest.fn(async () => ({
     status: 'granted',
   })),

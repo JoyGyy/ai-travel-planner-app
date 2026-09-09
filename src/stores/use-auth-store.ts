@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { API_ENDPOINTS } from '@/constants/config';
-import { apiClient } from '@/services/api-client';
+import { apiClient, setOnUnauthorizedHandler } from '@/services/api-client';
 import { AuthStorage, StoredUser } from '@/services/auth-storage';
 
 export interface AuthState {
@@ -56,8 +56,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             set({ user: res.user });
             await AuthStorage.saveUser(res.user);
           }
-        } catch {
-          // Token 可能过期或离线，暂时保留本地快照
+        } catch (err: any) {
+          if (err?.status === 401) {
+            await get().logout();
+          }
         }
       } else {
         set({ isInitialized: true });
@@ -141,3 +143,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 }));
+
+// 注册全局 401 拦截器：当 Token 失效时自动清除本地凭据与状态
+setOnUnauthorizedHandler(() => {
+  useAuthStore
+    .getState()
+    .logout()
+    .catch(() => {});
+});

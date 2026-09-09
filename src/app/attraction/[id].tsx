@@ -86,10 +86,12 @@ export default function AttractionDetailScreen() {
     if (!item) return;
     const prompt = `我想去${item.city}旅游，请帮我规划一条重点游览【${item.name}】的详细手账行程，包含周边地道美食与交通建议。`;
     router.dismiss();
-    router.push({
-      pathname: '/(tabs)/chat' as any,
-      params: { prompt },
-    });
+    setTimeout(() => {
+      router.push({
+        pathname: '/(tabs)/chat' as any,
+        params: { prompt },
+      });
+    }, 120);
   };
 
   if (!item) return null;

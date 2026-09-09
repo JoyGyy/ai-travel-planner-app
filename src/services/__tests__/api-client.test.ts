@@ -1,4 +1,4 @@
-import { apiClient, ApiError } from '../api-client';
+import { apiClient, ApiError, setOnUnauthorizedHandler } from '../api-client';
 import { AuthStorage } from '../auth-storage';
 
 // 模拟全局 fetch
@@ -60,7 +60,10 @@ describe('apiClient', () => {
     expect(callOptions.headers.Authorization).toBeUndefined();
   });
 
-  it('服务端返回 401 时抛出特定 ApiError', async () => {
+  it('服务端返回 401 时抛出特定 ApiError 并触发 setOnUnauthorizedHandler 回调', async () => {
+    const onUnauthorizedMock = jest.fn();
+    setOnUnauthorizedHandler(onUnauthorizedMock);
+
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 401,
@@ -77,6 +80,9 @@ describe('apiClient', () => {
     expect(error).toBeInstanceOf(ApiError);
     expect(error?.status).toBe(401);
     expect(error?.message).toBe('未登录');
+    expect(onUnauthorizedMock).toHaveBeenCalledTimes(1);
+
+    setOnUnauthorizedHandler(null);
   });
 
   it('拼接 Query Params 参数', async () => {

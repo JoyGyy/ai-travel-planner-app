@@ -115,15 +115,21 @@ export default function ProfileScreen() {
   };
 
   const handleClearCache = async () => {
-    Alert.alert('清理离线缓存', '确定要清理本地缓存的行程数据吗？', [
+    Alert.alert('清理离线缓存', '确定要清理本地缓存的离线行程数据吗？', [
       { text: '取消', style: 'cancel' },
       {
         text: '清理',
         style: 'destructive',
         onPress: async () => {
-          await AsyncStorage.clear();
+          await AsyncStorage.removeItem('@saved_itineraries');
           await loadSavedPlans();
-          Alert.alert('清理完成', '本地离线缓存已全部清空');
+          Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Success,
+          ).catch(() => {});
+          Alert.alert(
+            '清理完成',
+            '本地离线行程已清空，你的登录状态、收藏与历史对话均已安全保留。',
+          );
         },
       },
     ]);
