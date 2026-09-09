@@ -63,3 +63,44 @@ export const Spacing = {
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
+
+/** 手账美学设计规范 Token */
+export const JournalTheme = {
+  colors: {
+    background: '#FAF8F5',
+    surface: '#FFFFFF',
+    surfaceWarm: '#F5EFE6',
+    primary: '#E07A5F',
+    primaryDark: '#C9654B',
+    secondary: '#3D5A80',
+    accent: '#2A9D8F',
+    textPrimary: '#2B2D42',
+    textSecondary: '#8D99AE',
+    border: '#EAE3D9',
+    borderLight: '#F3EDE4',
+    stampRed: '#C94A4A',
+    stampBlue: '#2B5A8F',
+  },
+  shadows: {
+    card: {
+      shadowColor: '#2B2D42',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    hover: {
+      shadowColor: '#2B2D42',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 4,
+    },
+  },
+  radii: {
+    sm: 8,
+    md: 14,
+    lg: 20,
+    full: 9999,
+  },
+};
