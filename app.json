@@ -46,8 +46,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "827e9bf5-4a63-400b-9550-e742dc3b6cd8"
+        "projectId": "1de84f51-f0a6-4bfc-9728-46a977bc1329"
       }
-    }
+    },
+    "owner": "joygyzhi"
   }
 }
