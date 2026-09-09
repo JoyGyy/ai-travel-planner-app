@@ -60,3 +60,4 @@ const styles = StyleSheet.create({
     borderColor: JournalTheme.colors.primary,
   },
 });
+

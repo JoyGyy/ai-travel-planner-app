@@ -58,7 +58,7 @@ export default function ProfileScreen() {
         style: 'destructive',
         onPress: async () => {
           await logout();
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
         },
       },
     ]);
@@ -87,7 +87,7 @@ export default function ProfileScreen() {
         style: 'destructive',
         onPress: async () => {
           await removePlan(plan.id);
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
         },
       },
     ]);
@@ -242,7 +242,7 @@ export default function ProfileScreen() {
                   activeTab === 'itineraries' && styles.tabBtnActive,
                 ]}
                 onPress={() => {
-                  Haptics.selectionAsync().catch(() => {});
+                  Haptics.selectionAsync().catch(() => { });
                   setActiveTab('itineraries');
                 }}
               >
@@ -262,7 +262,7 @@ export default function ProfileScreen() {
                   activeTab === 'favorites' && styles.tabBtnActive,
                 ]}
                 onPress={() => {
-                  Haptics.selectionAsync().catch(() => {});
+                  Haptics.selectionAsync().catch(() => { });
                   setActiveTab('favorites');
                 }}
               >
@@ -564,3 +564,4 @@ const styles = StyleSheet.create({
     color: JournalTheme.colors.textSecondary,
   },
 });
+

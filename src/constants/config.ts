@@ -33,3 +33,4 @@ export const API_ENDPOINTS = {
   // 社区 (二期)
   COMMUNITY_POSTS: '/api/community/posts',
 } as const;
+

@@ -55,3 +55,4 @@ describe('AttractionsService', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/api/attractions/att_1/favorite');
   });
 });
+

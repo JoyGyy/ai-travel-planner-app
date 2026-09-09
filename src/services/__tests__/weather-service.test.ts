@@ -44,3 +44,4 @@ describe('WeatherService', () => {
     expect(result.condition).toBe('晴朗');
   });
 });
+

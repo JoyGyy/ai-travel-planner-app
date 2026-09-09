@@ -116,13 +116,13 @@ export default function ItineraryDetailScreen() {
   const handleSave = async () => {
     if (!plan) return;
     await savePlan(plan);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
     Alert.alert('手账已封存', '行程已成功保存在本地，断网亦可随时查看！');
   };
 
   const handleToggleNode = async (dayNum: number, nodeId: string) => {
     if (!plan) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
     await toggleNodeVisited(plan.id, dayNum, nodeId);
 
     // 本地 state 同步更新
@@ -230,7 +230,7 @@ export default function ItineraryDetailScreen() {
                   key={d.day}
                   style={[styles.dayTab, isActive && styles.dayTabActive]}
                   onPress={() => {
-                    Haptics.selectionAsync().catch(() => {});
+                    Haptics.selectionAsync().catch(() => { });
                     setActiveDayIndex(index);
                   }}
                   activeOpacity={0.8}
@@ -575,3 +575,4 @@ const styles = StyleSheet.create({
     marginTop: Spacing.four,
   },
 });
+

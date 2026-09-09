@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { JournalTheme } from '@/constants/theme';
 import { useAuthStore } from '@/stores/use-auth-store';
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.preventAutoHideAsync().catch(() => { });
 
 export default function RootLayout() {
   const initAuth = useAuthStore((state) => state.initAuth);
@@ -15,7 +15,7 @@ export default function RootLayout() {
       try {
         await initAuth();
       } finally {
-        await SplashScreen.hideAsync().catch(() => {});
+        await SplashScreen.hideAsync().catch(() => { });
       }
     }
     prepare();

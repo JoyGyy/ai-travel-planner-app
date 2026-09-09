@@ -89,7 +89,7 @@ export default function ExploreScreen() {
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
     const isCurrentlyFav = favoriteIds.has(item.id);
 
     // 乐观更新
@@ -501,3 +501,4 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 });
+

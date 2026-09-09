@@ -79,3 +79,4 @@ describe('useItineraryStore', () => {
     expect(useItineraryStore.getState().savedPlans[0].id).toBe('plan_001');
   });
 });
+

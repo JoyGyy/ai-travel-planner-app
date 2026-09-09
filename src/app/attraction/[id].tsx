@@ -59,7 +59,7 @@ export default function AttractionDetailScreen() {
 
     if (!item) return;
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
     const nextState = !isFavorite;
     setIsFavorite(nextState);
 
@@ -335,3 +335,4 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
+

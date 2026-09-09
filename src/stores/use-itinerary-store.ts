@@ -122,3 +122,4 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
     return get().savedPlans.find((p) => p.id === id);
   },
 }));
+

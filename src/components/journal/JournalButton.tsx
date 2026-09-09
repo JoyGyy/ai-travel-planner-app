@@ -41,7 +41,7 @@ export function JournalButton({
 }: JournalButtonProps) {
   const handlePress = (e: any) => {
     if (haptic) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
     }
     onPress?.(e);
   };
@@ -149,3 +149,4 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.one,
   },
 });
+

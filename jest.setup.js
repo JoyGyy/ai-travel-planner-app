@@ -34,9 +34,9 @@ jest.mock('@react-native-async-storage/async-storage', () => {
 
 // Mock Haptics
 jest.mock('expo-haptics', () => ({
-  impactAsync: jest.fn(async () => {}),
-  selectionAsync: jest.fn(async () => {}),
-  notificationAsync: jest.fn(async () => {}),
+  impactAsync: jest.fn(async () => { }),
+  selectionAsync: jest.fn(async () => { }),
+  notificationAsync: jest.fn(async () => { }),
   ImpactFeedbackStyle: {
     Light: 'light',
     Medium: 'medium',

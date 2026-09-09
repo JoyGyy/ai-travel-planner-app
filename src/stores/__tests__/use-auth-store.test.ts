@@ -67,3 +67,4 @@ describe('useAuthStore', () => {
     expect(await AuthStorage.getToken()).toBeNull();
   });
 });
+

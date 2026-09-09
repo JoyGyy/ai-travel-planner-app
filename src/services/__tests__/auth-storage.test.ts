@@ -36,3 +36,4 @@ describe('AuthStorage', () => {
     expect(await AuthStorage.getUser()).toBeNull();
   });
 });
+
