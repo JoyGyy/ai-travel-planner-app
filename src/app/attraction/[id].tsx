@@ -26,30 +26,42 @@ export default function AttractionDetailScreen() {
   const params = useLocalSearchParams<{ id: string; itemData?: string }>();
   const { user } = useAuthStore();
 
-  const [item, setItem] = useState<AttractionItem | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-
-  useEffect(() => {
+  const [item, setItem] = useState<AttractionItem | null>(() => {
+    if (params.itemData) {
+      try {
+        return JSON.parse(params.itemData);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+  const [isFavorite, setIsFavorite] = useState<boolean>(() => {
     if (params.itemData) {
       try {
         const parsed = JSON.parse(params.itemData);
-        setItem(parsed);
-        setIsFavorite(!!parsed.isFavorite);
-        return;
+        return !!parsed?.isFavorite;
       } catch {
-        // ignore
+        return false;
       }
     }
+    return false;
+  });
 
-    if (params.id) {
+  useEffect(() => {
+    let active = true;
+    if (!item && params.id) {
       AttractionsService.getAttractionDetail(params.id).then((detail) => {
-        if (detail) {
+        if (active && detail) {
           setItem(detail);
           setIsFavorite(!!detail.isFavorite);
         }
       });
     }
-  }, [params.id, params.itemData]);
+    return () => {
+      active = false;
+    };
+  }, [params.id, item]);
 
   const handleToggleFavorite = async () => {
     if (!user) {

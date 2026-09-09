@@ -21,6 +21,12 @@ export interface AuthState {
   /** 退出登录 */
   logout: () => Promise<void>;
 
+  /** 修改密码 */
+  changePassword: (
+    currentPassword: string,
+    newPassword: string,
+  ) => Promise<void>;
+
   /** 更新本地用户资料 */
   setUser: (user: StoredUser | null) => void;
 }
@@ -113,6 +119,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } finally {
       await AuthStorage.clearAll();
       set({ user: null, token: null });
+    }
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    set({ isLoading: true });
+    try {
+      await apiClient.put(API_ENDPOINTS.PASSWORD, {
+        currentPassword,
+        newPassword,
+      });
+    } finally {
+      set({ isLoading: false });
     }
   },
 

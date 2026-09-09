@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -40,47 +40,86 @@ export default function ExploreScreen() {
 
   // 初始化城市与收藏
   useEffect(() => {
+    let active = true;
     async function initData() {
       const cityList = await AttractionsService.getCities();
+      if (!active) return;
       setCities(['全部', ...cityList.filter((c) => c !== '全部')]);
 
       if (user) {
         const favs = await AttractionsService.getFavoriteIds();
-        setFavoriteIds(new Set(favs));
+        if (active) {
+          setFavoriteIds(new Set(favs));
+        }
       }
     }
     initData();
+    return () => {
+      active = false;
+    };
   }, [user]);
 
   // 获取景点列表
-  const fetchAttractions = async (overrideKeyword?: string) => {
-    setLoading(true);
-    const kw = overrideKeyword !== undefined ? overrideKeyword : searchKeyword;
-    try {
-      const list = await AttractionsService.getAttractions({
-        city: selectedCity,
-        category: selectedCategory,
-        keyword: kw,
-      });
-      setAttractions(list);
-      setFavoriteIds((prev) => {
-        const next = new Set(prev);
-        list.forEach((item) => {
-          if (item.isFavorite) next.add(item.id);
+  const fetchAttractions = useCallback(
+    async (overrideKeyword?: string) => {
+      setLoading(true);
+      const kw =
+        overrideKeyword !== undefined ? overrideKeyword : searchKeyword;
+      try {
+        const list = await AttractionsService.getAttractions({
+          city: selectedCity,
+          category: selectedCategory,
+          keyword: kw,
         });
-        return next;
-      });
-    } catch {
-      setAttractions([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+        setAttractions(list);
+        setFavoriteIds((prev) => {
+          const next = new Set(prev);
+          list.forEach((item) => {
+            if (item.isFavorite) next.add(item.id);
+          });
+          return next;
+        });
+      } catch {
+        setAttractions([]);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [selectedCity, selectedCategory, searchKeyword],
+  );
 
   useEffect(() => {
-    fetchAttractions();
-  }, [selectedCity, selectedCategory]);
+    let active = true;
+    AttractionsService.getAttractions({
+      city: selectedCity,
+      category: selectedCategory,
+      keyword: searchKeyword,
+    })
+      .then((list) => {
+        if (!active) return;
+        setAttractions(list);
+        setFavoriteIds((prev) => {
+          const next = new Set(prev);
+          list.forEach((item) => {
+            if (item.isFavorite) next.add(item.id);
+          });
+          return next;
+        });
+        setLoading(false);
+        setRefreshing(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        setAttractions([]);
+        setLoading(false);
+        setRefreshing(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [selectedCity, selectedCategory, searchKeyword]);
 
   const handleRefresh = () => {
     setRefreshing(true);

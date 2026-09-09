@@ -99,4 +99,42 @@ describe('AttractionsService', () => {
       '/api/attractions/att_1/favorite',
     );
   });
+
+  it('getFavoriteIds 与 getFavoriteAttractions 正确解析后端返回的收藏 items', async () => {
+    (apiClient.get as jest.Mock).mockResolvedValueOnce({
+      data: {
+        items: [
+          {
+            id: 'fav_1',
+            name: '西湖',
+            city: '杭州',
+            priceText: '免费',
+          },
+        ],
+      },
+      success: true,
+    });
+
+    const ids = await AttractionsService.getFavoriteIds();
+    expect(ids).toEqual(['fav_1']);
+
+    (apiClient.get as jest.Mock).mockResolvedValueOnce({
+      data: {
+        items: [
+          {
+            id: 'fav_1',
+            name: '西湖',
+            city: '杭州',
+            priceText: '免费',
+          },
+        ],
+      },
+      success: true,
+    });
+
+    const items = await AttractionsService.getFavoriteAttractions();
+    expect(items).toHaveLength(1);
+    expect(items[0].name).toBe('西湖');
+    expect(items[0].isFavorite).toBe(true);
+  });
 });

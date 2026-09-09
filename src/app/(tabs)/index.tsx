@@ -99,10 +99,29 @@ export default function HomeScreen() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showForecast, setShowForecast] = useState(false);
 
-  const fetchCityAndWeather = async () => {
+  useEffect(() => {
+    let active = true;
+
+    WeatherService.getCurrentCity().then(async (currentCity) => {
+      if (!active) return;
+      setCity(currentCity);
+      const wData = await WeatherService.getWeather(currentCity);
+      if (active) {
+        setWeather(wData);
+        setLoadingWeather(false);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
     try {
-      setLoadingWeather(true);
       const currentCity = await WeatherService.getCurrentCity();
       setCity(currentCity);
       const wData = await WeatherService.getWeather(currentCity);
@@ -110,18 +129,9 @@ export default function HomeScreen() {
     } catch {
       // ignore
     } finally {
-      setLoadingWeather(false);
       setRefreshing(false);
+      setLoadingWeather(false);
     }
-  };
-
-  useEffect(() => {
-    fetchCityAndWeather();
-  }, []);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchCityAndWeather();
   };
 
   const handleStartPlan = (promptText: string) => {
@@ -181,52 +191,115 @@ export default function HomeScreen() {
         }
       >
         {/* 天气与出行指数挂件 */}
-        <JournalCard style={styles.weatherCard} variant="warm">
-          <View style={styles.weatherTopRow}>
-            <View style={styles.cityLocationRow}>
-              <Ionicons
-                name="location-sharp"
-                size={16}
-                color={JournalTheme.colors.primary}
-              />
-              <Text style={styles.cityName}>{city}</Text>
-              <StampBadge
-                label="当前位置"
-                color="primary"
-                size="sm"
-                rotation={-4}
-              />
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => setShowForecast(!showForecast)}
+        >
+          <JournalCard style={styles.weatherCard} variant="warm">
+            <View style={styles.weatherTopRow}>
+              <View style={styles.cityLocationRow}>
+                <Ionicons
+                  name="location-sharp"
+                  size={16}
+                  color={JournalTheme.colors.primary}
+                />
+                <Text style={styles.cityName}>{city}</Text>
+                <StampBadge
+                  label="当前位置"
+                  color="primary"
+                  size="sm"
+                  rotation={-4}
+                />
+              </View>
+
+              {loadingWeather ? (
+                <ActivityIndicator
+                  size="small"
+                  color={JournalTheme.colors.primary}
+                />
+              ) : (
+                <View style={styles.tempRow}>
+                  <Ionicons
+                    name={
+                      weather?.condition.includes('雨')
+                        ? 'rainy-outline'
+                        : 'sunny-outline'
+                    }
+                    size={20}
+                    color={JournalTheme.colors.primary}
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text style={styles.tempText}>{weather?.temp}°C</Text>
+                  <Text style={styles.conditionText}>{weather?.condition}</Text>
+                  <Ionicons
+                    name={showForecast ? 'chevron-up' : 'chevron-down'}
+                    size={16}
+                    color={JournalTheme.colors.textSecondary}
+                    style={{ marginLeft: 4 }}
+                  />
+                </View>
+              )}
             </View>
 
-            {loadingWeather ? (
-              <ActivityIndicator
-                size="small"
-                color={JournalTheme.colors.primary}
-              />
-            ) : (
-              <View style={styles.tempRow}>
-                <Ionicons
-                  name={
-                    weather?.condition.includes('雨')
-                      ? 'rainy-outline'
-                      : 'sunny-outline'
-                  }
-                  size={20}
-                  color={JournalTheme.colors.primary}
-                  style={{ marginRight: 4 }}
-                />
-                <Text style={styles.tempText}>{weather?.temp}°C</Text>
-                <Text style={styles.conditionText}>{weather?.condition}</Text>
+            <View style={styles.dividerDashed} />
+
+            <Text style={styles.weatherTips} numberOfLines={showForecast ? undefined : 2}>
+              🌿 {weather?.tips || '今日天气适宜出行，记录属于你的美好旅途！'}
+            </Text>
+
+            {/* 多日天气预报手账展开 */}
+            {showForecast && (
+              <View style={styles.forecastContainer}>
+                <View style={styles.forecastMetaRow}>
+                  <Text style={styles.forecastMetaText}>
+                    体感：{weather?.feelsLike ?? weather?.temp}°C
+                  </Text>
+                  {weather?.humidity && (
+                    <Text style={styles.forecastMetaText}>
+                      湿度：{weather.humidity}
+                    </Text>
+                  )}
+                  {weather?.wind && (
+                    <Text style={styles.forecastMetaText}>
+                      风况：{weather.wind}
+                    </Text>
+                  )}
+                </View>
+
+                {Array.isArray(weather?.forecast) && weather.forecast.length > 0 && (
+                  <View style={styles.forecastList}>
+                    <Text style={styles.forecastTitle}>未来几日天气展望</Text>
+                    {weather.forecast.slice(0, 4).map((item, idx) => (
+                      <View key={idx} style={styles.forecastItem}>
+                        <Text style={styles.forecastDate}>{item.date}</Text>
+                        <View style={styles.forecastCond}>
+                          <Ionicons
+                            name={
+                              item.weatherDesc.includes('雨')
+                                ? 'rainy-outline'
+                                : item.weatherDesc.includes('多云')
+                                  ? 'partly-sunny-outline'
+                                  : 'sunny-outline'
+                            }
+                            size={14}
+                            color={JournalTheme.colors.secondary}
+                            style={{ marginRight: 4 }}
+                          />
+                          <Text style={styles.forecastDesc}>
+                            {item.weatherDesc}
+                          </Text>
+                        </View>
+                        <Text style={styles.forecastTempRange}>
+                          {item.minTemp}°C ~ {item.maxTemp}°C
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </View>
             )}
-          </View>
-
-          <View style={styles.dividerDashed} />
-
-          <Text style={styles.weatherTips} numberOfLines={2}>
-            🌿 {weather?.tips || '今日天气适宜出行，记录属于你的美好旅途！'}
-          </Text>
-        </JournalCard>
+          </JournalCard>
+        </TouchableOpacity>
 
         {/* 灵感盲盒胶囊栏 */}
         <View style={styles.sectionHeader}>
@@ -548,6 +621,59 @@ const styles = StyleSheet.create({
   destBudgetValue: {
     fontSize: 14,
     fontWeight: '700',
+    color: JournalTheme.colors.primary,
+  },
+  forecastContainer: {
+    marginTop: Spacing.two,
+    paddingTop: Spacing.two,
+    borderTopWidth: 0.5,
+    borderTopColor: JournalTheme.colors.border,
+    borderStyle: 'dashed',
+  },
+  forecastMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.two,
+  },
+  forecastMetaText: {
+    fontSize: 12,
+    color: JournalTheme.colors.textSecondary,
+  },
+  forecastList: {
+    backgroundColor: JournalTheme.colors.surfaceWarm,
+    borderRadius: JournalTheme.radii.sm,
+    padding: Spacing.two,
+    gap: 6,
+  },
+  forecastTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: JournalTheme.colors.textPrimary,
+    marginBottom: 2,
+  },
+  forecastItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  forecastDate: {
+    fontSize: 12,
+    color: JournalTheme.colors.textPrimary,
+    width: 60,
+  },
+  forecastCond: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  forecastDesc: {
+    fontSize: 12,
+    color: JournalTheme.colors.textSecondary,
+  },
+  forecastTempRange: {
+    fontSize: 12,
+    fontWeight: '600',
     color: JournalTheme.colors.primary,
   },
 });

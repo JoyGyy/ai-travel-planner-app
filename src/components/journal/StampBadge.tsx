@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { JournalTheme, Spacing } from '@/constants/theme';
+import { JournalTheme } from '@/constants/theme';
 
 export interface StampBadgeProps {
   label: string;

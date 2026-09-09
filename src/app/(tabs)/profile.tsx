@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
+  Image,
+  Modal,
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -17,35 +20,74 @@ import { JournalTheme, Spacing } from '@/constants/theme';
 import { JournalCard } from '@/components/journal/JournalCard';
 import { StampBadge } from '@/components/journal/StampBadge';
 import { JournalButton } from '@/components/journal/JournalButton';
-import { AttractionsService } from '@/services/attractions-service';
+import {
+  AttractionItem,
+  AttractionsService,
+} from '@/services/attractions-service';
 import { useAuthStore } from '@/stores/use-auth-store';
 import { ItineraryPlan, useItineraryStore } from '@/stores/use-itinerary-store';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout, changePassword } = useAuthStore();
   const { savedPlans, loadSavedPlans, removePlan } = useItineraryStore();
 
   const [activeTab, setActiveTab] = useState<'itineraries' | 'favorites'>(
     'itineraries',
   );
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [favoriteAttractions, setFavoriteAttractions] = useState<
+    AttractionItem[]
+  >([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadProfileData = async () => {
+  // 修改密码相关状态
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const loadProfileData = useCallback(async () => {
     await loadSavedPlans();
     if (user) {
-      const favs = await AttractionsService.getFavoriteIds();
-      setFavoriteIds(favs);
+      const [favIds, favItems] = await Promise.all([
+        AttractionsService.getFavoriteIds(),
+        AttractionsService.getFavoriteAttractions(),
+      ]);
+      setFavoriteIds(favIds);
+      setFavoriteAttractions(favItems);
     } else {
       setFavoriteIds([]);
+      setFavoriteAttractions([]);
     }
     setRefreshing(false);
-  };
+  }, [user, loadSavedPlans]);
 
   useEffect(() => {
-    loadProfileData();
-  }, [user]);
+    let active = true;
+    loadSavedPlans().then(async () => {
+      if (!active) return;
+      if (user) {
+        const [favIds, favItems] = await Promise.all([
+          AttractionsService.getFavoriteIds(),
+          AttractionsService.getFavoriteAttractions(),
+        ]);
+        if (active) {
+          setFavoriteIds(favIds);
+          setFavoriteAttractions(favItems);
+        }
+      } else {
+        if (active) {
+          setFavoriteIds([]);
+          setFavoriteAttractions([]);
+        }
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [user, loadSavedPlans]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -167,6 +209,100 @@ export default function ProfileScreen() {
     </JournalCard>
   );
 
+  const handleRemoveFavorite = async (item: AttractionItem) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setFavoriteAttractions((prev) => prev.filter((a) => a.id !== item.id));
+    setFavoriteIds((prev) => prev.filter((id) => id !== item.id));
+    try {
+      await AttractionsService.toggleFavorite(item.id);
+    } catch {
+      loadProfileData();
+    }
+  };
+
+  const handleChangePasswordSubmit = async () => {
+    if (!oldPassword.trim() || !newPassword.trim()) {
+      Alert.alert('提示', '请输入原密码和新密码');
+      return;
+    }
+    if (newPassword.length < 8) {
+      Alert.alert('提示', '新密码至少需要 8 位字符，包含大小写字母与数字');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert('提示', '两次输入的新密码不一致');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await changePassword(oldPassword.trim(), newPassword.trim());
+      Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Success,
+      ).catch(() => {});
+      Alert.alert('修改成功', '登录密码已成功更新！');
+      setShowPasswordModal(false);
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (e: any) {
+      Alert.alert('修改失败', e.message || '原密码错误或网络异常');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const renderFavoriteItem = ({ item }: { item: AttractionItem }) => (
+    <JournalCard style={styles.favoriteCard}>
+      <TouchableOpacity
+        onPress={() =>
+          router.push({
+            pathname: '/attraction/[id]' as any,
+            params: { id: item.id, itemData: JSON.stringify(item) },
+          })
+        }
+        activeOpacity={0.8}
+        style={styles.favoriteRow}
+      >
+        <Image source={{ uri: item.imageUrl }} style={styles.favoriteImage} />
+        <View style={styles.favoriteInfo}>
+          <View style={styles.favoriteHeader}>
+            <Text style={styles.favoriteName} numberOfLines={1}>
+              {item.name}
+            </Text>
+            <TouchableOpacity
+              onPress={() => handleRemoveFavorite(item)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name="heart"
+                size={18}
+                color={JournalTheme.colors.stampRed}
+              />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.favoriteTagRow}>
+            <StampBadge
+              label={item.city}
+              color="blue"
+              size="sm"
+              rotation={-2}
+            />
+            <Text style={styles.favoriteCategory}>
+              {item.category || '精选景点'}
+            </Text>
+            <Text style={styles.favoritePrice}>{item.price}</Text>
+          </View>
+
+          <Text style={styles.favoriteDesc} numberOfLines={1}>
+            {item.description}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </JournalCard>
+  );
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* 顶部标题 */}
@@ -175,9 +311,13 @@ export default function ProfileScreen() {
       </View>
 
       <FlatList
-        data={activeTab === 'itineraries' ? savedPlans : []}
+        data={activeTab === 'itineraries' ? savedPlans : (favoriteAttractions as any)}
         keyExtractor={(item) => item.id}
-        renderItem={renderItineraryItem}
+        renderItem={
+          activeTab === 'itineraries'
+            ? (renderItineraryItem as any)
+            : (renderFavoriteItem as any)
+        }
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -341,6 +481,28 @@ export default function ProfileScreen() {
           <View style={styles.settingsSection}>
             <Text style={styles.settingsTitle}>系统与存储</Text>
 
+            {user && (
+              <TouchableOpacity
+                style={styles.settingRow}
+                onPress={() => setShowPasswordModal(true)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons
+                    name="key-outline"
+                    size={18}
+                    color={JournalTheme.colors.textPrimary}
+                  />
+                  <Text style={styles.settingLabel}>修改登录密码</Text>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={JournalTheme.colors.textSecondary}
+                />
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity
               style={styles.settingRow}
               onPress={handleClearCache}
@@ -377,6 +539,77 @@ export default function ProfileScreen() {
           </View>
         }
       />
+
+      {/* 修改密码模态窗 */}
+      <Modal
+        visible={showPasswordModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowPasswordModal(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>修改登录密码</Text>
+            <TouchableOpacity
+              onPress={() => setShowPasswordModal(false)}
+              style={styles.modalCloseBtn}
+            >
+              <Ionicons
+                name="close"
+                size={22}
+                color={JournalTheme.colors.textPrimary}
+              />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalBody}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>当前原密码</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="请输入当前使用的密码"
+                placeholderTextColor={JournalTheme.colors.textSecondary}
+                value={oldPassword}
+                onChangeText={setOldPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>设置新密码</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="至少 8 位，含大小写字母与数字"
+                placeholderTextColor={JournalTheme.colors.textSecondary}
+                value={newPassword}
+                onChangeText={setNewPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>确认新密码</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="再次输入新密码"
+                placeholderTextColor={JournalTheme.colors.textSecondary}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <JournalButton
+              title={isChangingPassword ? '正在更新密码...' : '确认修改'}
+              variant="primary"
+              size="lg"
+              onPress={handleChangePasswordSubmit}
+              disabled={isChangingPassword}
+              style={{ marginTop: Spacing.four }}
+            />
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -595,5 +828,100 @@ const styles = StyleSheet.create({
   settingValue: {
     fontSize: 12,
     color: JournalTheme.colors.textSecondary,
+  },
+  favoriteCard: {
+    marginBottom: Spacing.three,
+    padding: Spacing.three,
+  },
+  favoriteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  favoriteImage: {
+    width: 80,
+    height: 80,
+    borderRadius: JournalTheme.radii.md,
+    backgroundColor: JournalTheme.colors.border,
+    marginRight: Spacing.three,
+  },
+  favoriteInfo: {
+    flex: 1,
+  },
+  favoriteHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  favoriteName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: JournalTheme.colors.textPrimary,
+    flex: 1,
+    marginRight: Spacing.two,
+  },
+  favoriteTagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginVertical: 4,
+  },
+  favoriteCategory: {
+    fontSize: 11,
+    color: JournalTheme.colors.textSecondary,
+  },
+  favoritePrice: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: JournalTheme.colors.primary,
+    marginLeft: 'auto',
+  },
+  favoriteDesc: {
+    fontSize: 12,
+    color: JournalTheme.colors.textSecondary,
+    lineHeight: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: JournalTheme.colors.background,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    borderBottomWidth: 1,
+    borderBottomColor: JournalTheme.colors.border,
+    backgroundColor: JournalTheme.colors.surface,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: JournalTheme.colors.textPrimary,
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  modalBody: {
+    padding: Spacing.four,
+  },
+  inputGroup: {
+    marginBottom: Spacing.three,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: JournalTheme.colors.textPrimary,
+    marginBottom: 6,
+  },
+  textInput: {
+    height: 46,
+    borderRadius: JournalTheme.radii.md,
+    backgroundColor: JournalTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: JournalTheme.colors.border,
+    paddingHorizontal: Spacing.three,
+    fontSize: 14,
+    color: JournalTheme.colors.textPrimary,
   },
 });

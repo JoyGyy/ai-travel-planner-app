@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   StyleSheet,
   Text,
@@ -12,6 +13,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { JournalTheme, Spacing } from '@/constants/theme';
 import { ItinerarySummaryCard } from '@/components/journal/ItinerarySummaryCard';
@@ -26,21 +28,39 @@ const SUGGESTED_QUESTIONS = [
 
 export default function ChatScreen() {
   const params = useLocalSearchParams<{ prompt?: string }>();
-  const { messages, isGenerating, sendMessage, stopGenerating, clearMessages } =
-    useChatStore();
+  const {
+    messages,
+    isGenerating,
+    sendMessage,
+    stopGenerating,
+    clearMessages,
+    sessions,
+    currentSessionId,
+    loadSessions,
+    switchSession,
+    createNewSession,
+    deleteSession,
+  } = useChatStore();
 
   const [input, setInput] = useState('');
+  const [showSessionModal, setShowSessionModal] = useState(false);
   const [expandedThoughts, setExpandedThoughts] = useState<
     Record<string, boolean>
   >({});
   const flatListRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
 
   // 处理从首页或外部带入的 prompt
   useEffect(() => {
     if (params?.prompt && typeof params.prompt === 'string') {
       sendMessage(params.prompt);
     }
-  }, [params?.prompt]);
+  }, [params?.prompt, sendMessage]);
+
+  const lastMessageContent = messages[messages.length - 1]?.content;
 
   // 新消息产生时平滑滚动到底部
   useEffect(() => {
@@ -48,7 +68,7 @@ export default function ChatScreen() {
       flatListRef.current?.scrollToEnd({ animated: true });
     }, 100);
     return () => clearTimeout(timer);
-  }, [messages, messages[messages.length - 1]?.content]);
+  }, [messages, lastMessageContent]);
 
   const handleSend = () => {
     if (!input.trim() || isGenerating) return;
@@ -139,25 +159,188 @@ export default function ChatScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* 顶部标题栏 */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>AI 旅行手账助理</Text>
-          <Text style={styles.headerSubtitle}>
-            {isGenerating ? '正在规划中...' : '灵感对话与路线定制'}
-          </Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            style={styles.sessionBtn}
+            onPress={() => {
+              Haptics.selectionAsync().catch(() => {});
+              setShowSessionModal(true);
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons
+              name="albums-outline"
+              size={20}
+              color={JournalTheme.colors.secondary}
+            />
+            {sessions.length > 0 && (
+              <View style={styles.sessionBadge}>
+                <Text style={styles.sessionBadgeText}>{sessions.length}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.headerTitleWrap}>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              AI 旅行手账助理
+            </Text>
+            <Text style={styles.headerSubtitle}>
+              {isGenerating ? '正在规划中...' : '灵感对话与路线定制'}
+            </Text>
+          </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.resetBtn}
-          onPress={clearMessages}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons
-            name="refresh-outline"
-            size={20}
-            color={JournalTheme.colors.textSecondary}
-          />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.resetBtn}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
+                () => {},
+              );
+              createNewSession();
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons
+              name="add-circle-outline"
+              size={22}
+              color={JournalTheme.colors.primary}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.resetBtn}
+            onPress={clearMessages}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons
+              name="refresh-outline"
+              size={20}
+              color={JournalTheme.colors.textSecondary}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* 历史会话模态窗 */}
+      <Modal
+        visible={showSessionModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowSessionModal(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>历史旅行规划手账</Text>
+            <TouchableOpacity
+              onPress={() => setShowSessionModal(false)}
+              style={styles.modalCloseBtn}
+            >
+              <Ionicons
+                name="close"
+                size={22}
+                color={JournalTheme.colors.textPrimary}
+              />
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            data={sessions}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.sessionList}
+            renderItem={({ item }) => {
+              const isCurrent = item.id === currentSessionId;
+              return (
+                <TouchableOpacity
+                  style={[
+                    styles.sessionItem,
+                    isCurrent && styles.sessionItemCurrent,
+                  ]}
+                  onPress={() => {
+                    switchSession(item.id);
+                    setShowSessionModal(false);
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <View style={styles.sessionItemLeft}>
+                    <Ionicons
+                      name={isCurrent ? 'book' : 'book-outline'}
+                      size={20}
+                      color={
+                        isCurrent
+                          ? JournalTheme.colors.primary
+                          : JournalTheme.colors.textSecondary
+                      }
+                      style={{ marginRight: 10 }}
+                    />
+                    <View style={styles.sessionItemInfo}>
+                      <Text
+                        style={[
+                          styles.sessionItemTitle,
+                          isCurrent && styles.sessionItemTitleCurrent,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {item.title || '旅行手账规划'}
+                      </Text>
+                      <Text style={styles.sessionItemDate}>
+                        {new Date(
+                          item.updatedAt || item.createdAt,
+                        ).toLocaleDateString()}{' '}
+                        · {item.messages.length} 条对话
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => deleteSession(item.id)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={styles.sessionDeleteBtn}
+                  >
+                    <Ionicons
+                      name="trash-outline"
+                      size={18}
+                      color={JournalTheme.colors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              );
+            }}
+            ListEmptyComponent={
+              <View style={styles.sessionEmpty}>
+                <Ionicons
+                  name="chatbubbles-outline"
+                  size={44}
+                  color={JournalTheme.colors.textSecondary}
+                />
+                <Text style={styles.sessionEmptyTitle}>暂无历史规划</Text>
+                <Text style={styles.sessionEmptyDesc}>
+                  每一次与 AI 的深入探讨都会自动记录在此，随时重温
+                </Text>
+              </View>
+            }
+          />
+
+          <View style={styles.modalFooter}>
+            <TouchableOpacity
+              style={styles.newSessionBtn}
+              onPress={() => {
+                createNewSession();
+                setShowSessionModal(false);
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="add"
+                size={20}
+                color="#FFFFFF"
+                style={{ marginRight: 6 }}
+              />
+              <Text style={styles.newSessionBtnText}>开启新旅行规划</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </Modal>
 
       <KeyboardAvoidingView
         style={styles.chatArea}
@@ -424,5 +607,144 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 2,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  sessionBtn: {
+    padding: Spacing.two,
+    borderRadius: JournalTheme.radii.full,
+    backgroundColor: JournalTheme.colors.background,
+    marginRight: Spacing.two,
+  },
+  sessionBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    backgroundColor: JournalTheme.colors.primary,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  sessionBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerTitleWrap: {
+    flex: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: JournalTheme.colors.background,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    borderBottomWidth: 1,
+    borderBottomColor: JournalTheme.colors.border,
+    backgroundColor: JournalTheme.colors.surface,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: JournalTheme.colors.textPrimary,
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  sessionList: {
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+  },
+  sessionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: JournalTheme.colors.surface,
+    padding: Spacing.three,
+    borderRadius: JournalTheme.radii.md,
+    borderWidth: 1,
+    borderColor: JournalTheme.colors.border,
+    marginBottom: Spacing.two,
+  },
+  sessionItemCurrent: {
+    borderColor: JournalTheme.colors.primary,
+    backgroundColor: '#FFFBF9',
+  },
+  sessionItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  sessionItemInfo: {
+    flex: 1,
+  },
+  sessionItemTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: JournalTheme.colors.textPrimary,
+  },
+  sessionItemTitleCurrent: {
+    color: JournalTheme.colors.primary,
+    fontWeight: '700',
+  },
+  sessionItemDate: {
+    fontSize: 11,
+    color: JournalTheme.colors.textSecondary,
+    marginTop: 2,
+  },
+  sessionDeleteBtn: {
+    padding: Spacing.two,
+  },
+  sessionEmpty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.six,
+  },
+  sessionEmptyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: JournalTheme.colors.textPrimary,
+    marginTop: Spacing.two,
+  },
+  sessionEmptyDesc: {
+    fontSize: 12,
+    color: JournalTheme.colors.textSecondary,
+    marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: Spacing.four,
+  },
+  modalFooter: {
+    padding: Spacing.four,
+    borderTopWidth: 1,
+    borderTopColor: JournalTheme.colors.border,
+    backgroundColor: JournalTheme.colors.surface,
+  },
+  newSessionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: JournalTheme.colors.primary,
+    borderRadius: JournalTheme.radii.md,
+    paddingVertical: 12,
+  },
+  newSessionBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });

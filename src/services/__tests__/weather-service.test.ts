@@ -34,6 +34,25 @@ describe('WeatherService', () => {
     expect(result.tips).toBe('温度适宜，适合西湖漫步');
   });
 
+  it('getWeather 成功映射天气多日预报 forecast 数组', async () => {
+    (apiClient.get as jest.Mock).mockResolvedValueOnce({
+      city: '上海',
+      temperature: 20,
+      weatherDesc: '晴',
+      forecast: [
+        { date: '2026-09-10', maxTemp: 26, minTemp: 18, weatherCode: 0, weatherDesc: '晴' },
+        { date: '2026-09-11', maxTemp: 24, minTemp: 17, weatherCode: 1, weatherDesc: '多云' },
+      ],
+    });
+
+    const result = await WeatherService.getWeather('上海');
+
+    expect(result.city).toBe('上海');
+    expect(result.condition).toBe('晴');
+    expect(result.forecast).toHaveLength(2);
+    expect(result.forecast?.[0].maxTemp).toBe(26);
+  });
+
   it('getWeather 接口异常时返回兜底数据而不崩溃', async () => {
     (apiClient.get as jest.Mock).mockRejectedValueOnce(
       new Error('Network error'),
@@ -44,5 +63,6 @@ describe('WeatherService', () => {
     expect(result.city).toBe('成都');
     expect(result.temp).toBe(22);
     expect(result.condition).toBe('晴朗');
+    expect(result.forecast?.length).toBeGreaterThan(0);
   });
 });

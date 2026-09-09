@@ -245,8 +245,71 @@ export const AttractionsService = {
   async getFavoriteIds(): Promise<string[]> {
     try {
       const res = await apiClient.get<any>(API_ENDPOINTS.FAVORITES);
-      if (Array.isArray(res?.data)) {
-        return res.data.map((item: any) => String(item.id || item));
+      const items =
+        res?.data?.items ||
+        (Array.isArray(res?.data) ? res.data : []) ||
+        res?.items ||
+        [];
+      if (Array.isArray(items)) {
+        return items.map((item: any) => String(item.id || item._id || item));
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  },
+
+  /** 获取当前登录用户收藏的完整景点列表 */
+  async getFavoriteAttractions(): Promise<AttractionItem[]> {
+    try {
+      const res = await apiClient.get<any>(API_ENDPOINTS.FAVORITES);
+      const items =
+        res?.data?.items ||
+        (Array.isArray(res?.data) ? res.data : []) ||
+        res?.items ||
+        [];
+
+      if (Array.isArray(items)) {
+        return items.map((item: any) => {
+          const rawImg =
+            item.coverImage ||
+            item.imageUrl ||
+            item.image ||
+            item.cover;
+          const imageUrl = resolveImageUrl(rawImg);
+
+          const price =
+            item.priceText ||
+            (typeof item.price === 'number' ? `¥${item.price}` : item.price) ||
+            '免费开放';
+
+          const category =
+            item.category ||
+            (Array.isArray(item.tags) && item.tags.length > 0
+              ? item.tags[0]
+              : '自然风光');
+
+          const tips = Array.isArray(item.tips)
+            ? item.tips.join('；')
+            : item.tips || '';
+
+          return {
+            id: String(item.id || item._id),
+            name: item.name || '景点名称',
+            city: item.city || '国内',
+            category,
+            rating: typeof item.rating === 'number' ? item.rating : 4.8,
+            price,
+            imageUrl,
+            description:
+              item.description || item.summary || '历史悠久，景色秀丽。',
+            address: item.address || `${item.city || ''}风景名胜区`,
+            openingHours: item.openingHours || '08:30 - 17:30',
+            recommendedDuration: item.recommendedDuration || '2-3 小时',
+            tips,
+            isFavorite: true,
+          };
+        });
       }
       return [];
     } catch {

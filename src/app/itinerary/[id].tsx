@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   ScrollView,
   StyleSheet,
@@ -20,6 +21,92 @@ import {
   ItineraryPlan,
   useItineraryStore,
 } from '@/stores/use-itinerary-store';
+import { ShareService } from '@/services/share-service';
+
+// 模块级辅助函数：构造默认天数节点
+function generateDefaultDays(dest: string, total: number): ItineraryDay[] {
+  return Array.from({ length: total }, (_, i) => ({
+    day: i + 1,
+    theme:
+      i === 0
+        ? '初见江南 · 经典漫步'
+        : i === 1
+          ? '烟火寻味 · 文化探秘'
+          : '慢调归途 · 惬意小憩',
+    nodes: [
+      {
+        id: `d${i + 1}_n1`,
+        time: '09:30',
+        placeName: i === 0 ? `${dest}核心地标游` : '文化街区与老字号',
+        description: '早晨空气清爽，适合步行拍照打卡，避开下午人流高峰。',
+        transport: '地铁 / 步行 800 米',
+        visited: false,
+      },
+      {
+        id: `d${i + 1}_n2`,
+        time: '12:30',
+        placeName: '地道风味私房菜',
+        description: '品尝当地老饕推荐特色菜，小憩充电。',
+        transport: '步行 5 分钟',
+        visited: false,
+      },
+      {
+        id: `d${i + 1}_n3`,
+        time: '15:00',
+        placeName: '自然风光与小众秘境',
+        description: '依山傍水，感受独具一格的旅行慢节奏与手账留白。',
+        transport: '打车约 15 分钟',
+        visited: false,
+      },
+    ],
+  }));
+}
+
+function parsePlanFromParams(
+  id?: string,
+  planData?: string,
+): ItineraryPlan {
+  if (id) {
+    const existing = useItineraryStore.getState().getPlanById(id);
+    if (existing) return existing;
+  }
+
+  if (planData) {
+    try {
+      const parsed = JSON.parse(planData);
+      return {
+        id: parsed.id || `plan_${Date.now()}`,
+        title: parsed.title || `${parsed.destination || '目的地'}手账行程`,
+        destination: parsed.destination || '杭州',
+        totalDays: parsed.totalDays || parsed.days?.length || 3,
+        estimatedBudget: parsed.budget || '¥1,500 ~ ¥2,500',
+        summary:
+          parsed.summary || 'AI 深度定制的手账旅行路线，不赶路，更惬意。',
+        days:
+          Array.isArray(parsed.days) && parsed.days[0]?.nodes
+            ? parsed.days
+            : generateDefaultDays(
+                parsed.destination || '杭州',
+                parsed.totalDays || 3,
+              ),
+        createdAt: Date.now(),
+      };
+    } catch {
+      // fallback
+    }
+  }
+
+  return {
+    id: 'demo_plan',
+    title: '西湖慢漫游 · 3日春日手账',
+    destination: '杭州',
+    totalDays: 3,
+    estimatedBudget: '¥1,800',
+    summary: '慢品江南春色，泛舟西湖杨公堤，龙井村茶山小憩，打卡诗意江南。',
+    createdAt: Date.now(),
+    days: generateDefaultDays('杭州', 3),
+  };
+}
 
 export default function ItineraryDetailScreen() {
   const router = useRouter();
@@ -27,104 +114,18 @@ export default function ItineraryDetailScreen() {
   const { getPlanById, savePlan, toggleNodeVisited, savedPlans } =
     useItineraryStore();
 
-  const [plan, setPlan] = useState<ItineraryPlan | null>(null);
+  const existingFromStore = params.id ? getPlanById(params.id) : undefined;
+  const [localPlan, setLocalPlan] = useState<ItineraryPlan>(() =>
+    parsePlanFromParams(params.id, params.planData),
+  );
+  const plan = existingFromStore || localPlan;
+
   const [activeDayIndex, setActiveDayIndex] = useState(0);
+  const [isSharing, setIsSharing] = useState(false);
 
-  useEffect(() => {
-    // 优先从本地已保存行程加载
-    if (params.id) {
-      const existing = getPlanById(params.id);
-      if (existing) {
-        setPlan(existing);
-        return;
-      }
-    }
-
-    // 从路由传参反序列化
-    if (params.planData) {
-      try {
-        const parsed = JSON.parse(params.planData);
-        // 适配并补齐结构
-        const formatted: ItineraryPlan = {
-          id: parsed.id || `plan_${Date.now()}`,
-          title: parsed.title || `${parsed.destination || '目的地'}手账行程`,
-          destination: parsed.destination || '杭州',
-          totalDays: parsed.totalDays || parsed.days?.length || 3,
-          estimatedBudget: parsed.budget || '¥1,500 ~ ¥2,500',
-          summary:
-            parsed.summary || 'AI 深度定制的手账旅行路线，不赶路，更惬意。',
-          days:
-            Array.isArray(parsed.days) && parsed.days[0]?.nodes
-              ? parsed.days
-              : generateDefaultDays(
-                  parsed.destination || '杭州',
-                  parsed.totalDays || 3,
-                ),
-          createdAt: Date.now(),
-        };
-        setPlan(formatted);
-        return;
-      } catch (e) {
-        console.warn('parse planData error:', e);
-      }
-    }
-
-    // 默认兜底示例手账数据
-    setPlan({
-      id: 'demo_plan',
-      title: '西湖慢漫游 · 3日春日手账',
-      destination: '杭州',
-      totalDays: 3,
-      estimatedBudget: '¥1,800',
-      summary: '慢品江南春色，泛舟西湖杨公堤，龙井村茶山小憩，打卡诗意江南。',
-      createdAt: Date.now(),
-      days: generateDefaultDays('杭州', 3),
-    });
-  }, [params.id, params.planData, savedPlans]);
-
-  // 辅助函数：构造默认天数节点
-  function generateDefaultDays(dest: string, total: number): ItineraryDay[] {
-    return Array.from({ length: total }, (_, i) => ({
-      day: i + 1,
-      theme:
-        i === 0
-          ? '初见江南 · 经典漫步'
-          : i === 1
-            ? '烟火寻味 · 文化探秘'
-            : '慢调归途 · 惬意小憩',
-      nodes: [
-        {
-          id: `d${i + 1}_n1`,
-          time: '09:30',
-          placeName: i === 0 ? `${dest}核心地标游` : '文化街区与老字号',
-          description: '早晨空气清爽，适合步行拍照打卡，避开下午人流高峰。',
-          transport: '地铁 / 步行 800 米',
-          visited: false,
-        },
-        {
-          id: `d${i + 1}_n2`,
-          time: '12:30',
-          placeName: '地道风味私房菜',
-          description: '品尝当地老饕推荐特色菜，小憩充电。',
-          transport: '步行 5 分钟',
-          visited: false,
-        },
-        {
-          id: `d${i + 1}_n3`,
-          time: '15:00',
-          placeName: '自然风光与小众秘境',
-          description: '依山傍水，感受独具一格的旅行慢节奏与手账留白。',
-          transport: '打车约 15 分钟',
-          visited: false,
-        },
-      ],
-    }));
-  }
-
-  const isSaved = plan ? savedPlans.some((p) => p.id === plan.id) : false;
+  const isSaved = savedPlans.some((p) => p.id === plan.id);
 
   const handleSave = async () => {
-    if (!plan) return;
     await savePlan(plan);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
       () => {},
@@ -132,30 +133,41 @@ export default function ItineraryDetailScreen() {
     Alert.alert('手账已封存', '行程已成功保存在本地，断网亦可随时查看！');
   };
 
+  const handleShare = async () => {
+    setIsSharing(true);
+    Haptics.selectionAsync().catch(() => {});
+    try {
+      let shareUrl: string | undefined;
+      try {
+        const res = await ShareService.createCloudShare(plan);
+        shareUrl = res.shareUrl;
+      } catch {
+        // 离线态直接调起原生分享
+      }
+      await ShareService.shareNativeItinerary(plan, shareUrl);
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   const handleToggleNode = async (dayNum: number, nodeId: string) => {
-    if (!plan) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     await toggleNodeVisited(plan.id, dayNum, nodeId);
 
     // 本地 state 同步更新
-    setPlan((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        days: prev.days.map((d) => {
-          if (d.day !== dayNum) return d;
-          return {
-            ...d,
-            nodes: d.nodes.map((n) =>
-              n.id === nodeId ? { ...n, visited: !n.visited } : n,
-            ),
-          };
-        }),
-      };
-    });
+    setLocalPlan((prev) => ({
+      ...prev,
+      days: prev.days.map((d) => {
+        if (d.day !== dayNum) return d;
+        return {
+          ...d,
+          nodes: d.nodes.map((n) =>
+            n.id === nodeId ? { ...n, visited: !n.visited } : n,
+          ),
+        };
+      }),
+    }));
   };
-
-  if (!plan) return null;
 
   const currentDay = plan.days[activeDayIndex] || plan.days[0];
 
@@ -182,17 +194,39 @@ export default function ItineraryDetailScreen() {
           <Text style={styles.navSubtitle}>手账旅行清单 · 离线可用</Text>
         </View>
 
-        <TouchableOpacity
-          onPress={handleSave}
-          style={styles.saveIconBtn}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons
-            name={isSaved ? 'bookmark' : 'bookmark-outline'}
-            size={22}
-            color={JournalTheme.colors.primary}
-          />
-        </TouchableOpacity>
+        <View style={styles.navActions}>
+          <TouchableOpacity
+            onPress={handleShare}
+            style={styles.navActionBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            disabled={isSharing}
+          >
+            {isSharing ? (
+              <ActivityIndicator
+                size="small"
+                color={JournalTheme.colors.primary}
+              />
+            ) : (
+              <Ionicons
+                name="share-social-outline"
+                size={22}
+                color={JournalTheme.colors.secondary}
+              />
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleSave}
+            style={styles.navActionBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons
+              name={isSaved ? 'bookmark' : 'bookmark-outline'}
+              size={22}
+              color={JournalTheme.colors.primary}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -376,6 +410,23 @@ export default function ItineraryDetailScreen() {
               />
             }
           />
+
+          <JournalButton
+            title={isSharing ? '正在生成分享手账...' : '分享与导出行程手账'}
+            variant="outlined"
+            size="md"
+            onPress={handleShare}
+            disabled={isSharing}
+            icon={
+              <Ionicons
+                name="share-social-outline"
+                size={18}
+                color={JournalTheme.colors.primary}
+                style={{ marginRight: 6 }}
+              />
+            }
+            style={{ marginTop: Spacing.two }}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -413,8 +464,16 @@ const styles = StyleSheet.create({
     color: JournalTheme.colors.textSecondary,
     marginTop: 2,
   },
-  saveIconBtn: {
+  navActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  navActionBtn: {
     padding: Spacing.one,
+    minWidth: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
     paddingHorizontal: Spacing.four,

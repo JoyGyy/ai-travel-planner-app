@@ -112,6 +112,19 @@ export const apiClient = {
     });
   },
 
+  /** PUT 请求快捷方法 */
+  async put<T>(
+    endpoint: string,
+    body?: unknown,
+    options?: Omit<RequestOptions, 'body' | 'method'>,
+  ): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      ...options,
+    });
+  },
+
   /** DELETE 请求快捷方法 */
   async delete<T>(
     endpoint: string,

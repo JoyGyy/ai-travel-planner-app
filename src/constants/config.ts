@@ -35,11 +35,14 @@ export const API_ENDPOINTS = {
   ME: '/api/auth/me',
   LOGOUT: '/api/auth/logout',
   PROFILE: '/api/auth/profile',
+  PASSWORD: '/api/auth/password',
 
   // AI 旅行规划
   TRAVEL_CHAT: '/api/travel/chat',
   TRAVEL_SESSIONS: '/api/travel/chat/sessions',
+  TRAVEL_SESSION_DETAIL: (id: string) => `/api/travel/chat/sessions/${id}`,
   TRAVEL_SHARE: '/api/travel/share',
+  TRAVEL_SHARE_DETAIL: (id: string) => `/api/travel/share/${id}`,
   TRAVEL_RECOMMEND: '/api/travel/recommend',
 
   // 景点与城市
